@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Nexus Prime Security - Simulace</title>
+    <style>
+        /* --- CSS STYLING --- */
+        body {
+            background-color: #0d1117; /* Tmavé pozadí mimo okno */
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Hlavní okno aplikace */
+        #app-window {
+            width: 950px;
+            height: 650px;
+            background-color: #161b22; /* Tmavá barva okna */
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Levý Sidebar */
+        #sidebar {
+            width: 220px;
+            background-color: #010409; /* Ještě tmavší pro kontrast */
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+        }
+        .logo {
+            color: #28a745; /* Barva značky */
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.8em;
+            font-weight: 300;
+        }
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            text-decoration: none;
+            color: #8b949e;
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 1.1em;
+        }
+        .nav-item:hover {
+            background-color: #21262d;
+        }
+        .nav-item.active {
+            background-color: #28a745;
+            color: white;
+            border-left: 5px solid #28a745;
+        }
+        
+        #license-status {
+            padding: 20px;
+            margin-top: auto; /* Přesune na spodek */
+            border-top: 1px solid #30363d;
+            font-size: 0.9em;
+            color: #8b949e;
+        }
+        .status-inactive { color: #f85149; } /* Červená */
+        .status-active { color: #28a745; font-weight: bold; } /* Zelená */
+
+
+        /* Hlavní obsah */
+        #content-area {
+            flex-grow: 1;
+            padding: 40px;
+        }
+        .module {
+            animation: fadeIn 0.5s;
+        }
+        .module.hidden {
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h2 { color: white; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; }
+
+        /* Tlačítka a Formuláře */
+        .primary-btn, .secondary-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .primary-btn {
+            background-color: #28a745;
+            color: white;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+        .primary-btn:hover { background-color: #228b3d; }
+        .secondary-btn {
+            background-color: #30363d;
+            color: #c9d1d9;
+            margin-left: 10px;
+        }
+        .secondary-btn:hover { background-color: #444c56; }
+        
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #30363d;
+            background-color: #0d1117;
+            color: white;
+            border-radius: 6px;
+            width: 300px;
+            margin-right: 10px;
+        }
+        
+        /* Modul Skenování */
+        #scan-visuals {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #scan-progress-bar {
+            width: 80%;
+            height: 25px;
+            background-color: #30363d;
+            border-radius: 12px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        #scan-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #28a745;
+            transition: width 0.5s ease-out; /* Plynulejší animace */
+            border-radius: 12px;
+        }
+        #scan-status {
+            margin-top: 15px;
+            font-size: 1.2em;
+            color: #8b949e;
+        }
+        #scan-status strong { color: white; }
+
+        /* Odemčené Prémiové Moduly */
+        .premium-feature {
+            background-color: #1f2428;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #28a745;
+        }
+        .locked {
+            filter: grayscale(100%);
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .locked h3:after {
+            content: " (VYŽADUJE ELITE LICENCI)";
+            color: #f85149;
+            font-size: 0.7em;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-window">
+        <aside id="sidebar">
+            <h1 class="logo">Nexus Prime</h1>
+            <nav>
+                <a href="#" class="nav-item active" data-module="dashboard">🛡️ Dashboard</a>
+                <a href="#" class="nav-item" data-module="scan">🔎 Skenování</a>
+                <a href="#" class="nav-item locked" data-module="vpn" id="vpn-nav">🌐 VPN Prime</a>
+                <a href="#" class="nav-item locked" data-module="identity" id="identity-nav">👤 Identity Guard</a>
+                <a href="#" class="nav-item" data-module="settings">⚙️ Nastavení</a>
+            </nav>
+            <div id="license-status">
+                Stav licence: <span id="license-text" class="status-inactive">Neaktivní</span>
+            </div>
+        </aside>
+
+        <main id="content-area">
+            
+            <div id="dashboard" class="module">
+                <h2>Vítejte zpět!</h2>
+                
+                <div id="security-score-card" style="background-color: #30363d; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h3>Celkové Bezpečnostní Skóre</h3>
+                    <div style="font-size: 3em; font-weight: bold;" id="security-score" class="status-inactive">65%</div>
+                    <p id="score-message">Aktuální stav není optimální. Spusťte chytrý sken.</p>
+                </div>
+                
+                <button id="start-smart-scan-dashboard" class="primary-btn">Spustit Chytrý Sken</button>
+                
+                <h3 style="margin-top: 40px;">Správa Licence</h3>
+                <p>Pro aktivaci prémiových funkcí zadejte licenční klíč:</p>
+                <input type="text" id="license-input" placeholder="Zadejte NPS-XXXX-YYYY-ZZZZ">
+                <button id="activate-btn" class="secondary-btn">Aktivovat</button>
+            </div>
+            
+            <div id="scan" class="module hidden">
+                <h2>Chytré Skenování</h2>
+                
+                <div id="scan-visuals">
+                    <p>Stav: <span id="scan-status">Připraveno ke spuštění.</span></p>
+                    <div id="scan-progress-bar">
+                        <div id="scan-fill"></div>
+                    </div>
+                </div>
+
+                <div id="scan-results" style="margin-top: 50px;">
+                    <h3>Výsledky Posledního Skenu:</h3>
+                    <p>Nalezené hrozby: <span id="threats-count">0</span></p>
+                    <p>Optimalizační položky: <span id="optim-count">0</span></p>
+                    <button id="start-scan-secondary" class="primary-btn">Opětovné Spuštění Skenu</button>
+                </div>
+
+            </div>
+            
+            <div id="vpn" class="module hidden">
+                <h2>🌐 VPN Prime</h2>
+                <div id="vpn-content">
+                    <div class="premium-feature locked" id="vpn-locked-content">
+                        <h3>Váš internet bez hranic a rizika</h3>
+                        <p>Zabezpečte své připojení neomezenou, bleskovou VPN sítě, která skrývá vaši IP adresu a šifruje všechna data.</p>
+                        <button class="primary-btn" disabled>Připojit VPN</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="identity" class="module hidden">
+                <h2>👤 Identity Guard</h2>
+                <div id="identity-content">
+                    <div class="premium-feature locked" id="identity-locked-content">
+                        <h3>Monitoring Dark Webu v reálném čase</h3>
+                        <p>Zadejte své e-mailové adresy a my budeme nepřetržitě monitorovat tisíce stránek na Dark Webu, zda nedošlo ke kompromitaci vašich údajů.</p>
+                        <button class="primary-btn" disabled>Spustit Monitoring</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings" class="module hidden">
+                <h2>⚙️ Nastavení</h2>
+                <p>Zde by byla nastavení pro upozornění, výjimky a jazyk aplikace.</p>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIKA --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.nav-item');
+            const modules = document.querySelectorAll('.module');
+            const scanBtnDashboard = document.getElementById('start-smart-scan-dashboard');
+            const scanBtnSecondary = document.getElementById('start-scan-secondary');
+
+            // --- 1. FUNKCE NAVIGACE ---
+            const switchModule = (moduleId) => {
+                navItems.forEach(i => {
+                    i.classList.remove('active');
+                    if (i.getAttribute('data-module') === moduleId) {
+                        i.classList.add('active');
+                    }
+                });
+                modules.forEach(m => m.classList.add('hidden'));
+                document.getElementById(moduleId).classList.remove('hidden');
+            };
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetModuleId = item.getAttribute('data-module');
+                    
+                    // Blokuje přístup k uzamčeným modulům, pokud není aktivní
+                    if (item.classList.contains('locked') && document.getElementById('license-text').classList.contains('status-inactive')) {
+                        alert('Tato prémiová funkce vyžaduje aktivní licenci Nexus Elite. Aktivujte ji na Dashboardu.');
+                        return;
+                    }
+                    
+                    switchModule(targetModuleId);
+                });
+            });
+            
+            // --- 2. FALEŠNÁ AKTIVACE LICENCE ---
+            const activateBtn = document.getElementById('activate-btn');
+            const licenseInput = document.getElementById('license-input');
+            const licenseText = document.getElementById('license-text');
+            const vpnNav = document.getElementById('vpn-nav');
+            const identityNav = document.getElementById('identity-nav');
+
+            const unlockFeatures = () => {
+                licenseText.innerText = 'Aktivní (Nexus Elite)';
+                licenseText.classList.remove('status-inactive');
+                licenseText.classList.add('status-active');
+                
+                // Odemčení navigačních položek
+                vpnNav.classList.remove('locked');
+                identityNav.classList.remove('locked');
+                
+                // Odemčení obsahu modulů
+                document.getElementById('vpn-content').innerHTML = `<h3>VPN je aktivní</h3><p>Jste připojeni k nejrychlejšímu serveru v Německu.</p><button class="primary-btn">Odpojit VPN</button>`;
+                document.getElementById('identity-content').innerHTML = `<h3>Monitoring běží</h3><p>Monitorujeme 3 e-mailové adresy. Žádné úniky nebyly nalezeny.</p><button class="primary-btn">Zobrazit Report</button>`;
+            };
+
+            activateBtn.addEventListener('click', () => {
+                const key = licenseInput.value.trim();
+                
+                if (key === 'NPS-MOCKUP-0001') {
+                    activateBtn.innerText = 'Ověřování...';
+                    activateBtn.disabled = true;
+
+                    setTimeout(() => {
+                        unlockFeatures();
+                        activateBtn.innerText = 'Aktivováno';
+                        activateBtn.disabled = true;
+                        alert('Licence úspěšně aktivována! Premium funkce odemčeny.');
+                    }, 2000); // 2s simulace komunikace se serverem
+                } else {
+                    alert('Neplatný licenční klíč. Zkuste NPS-MOCKUP-0001.');
+                }
+            });
+
+            // --- 3. SIMULACE SKENOVÁNÍ ---
+            const scanFill = document.getElementById('scan-fill');
+            const scanStatus = document.getElementById('scan-status');
+            const threatsCount = document.getElementById('threats-count');
+            const optimCount = document.getElementById('optim-count');
+            const securityScore = document.getElementById('security-score');
+            const scoreMessage = document.getElementById('score-message');
+
+            const startScanSimulation = () => {
+                switchModule('scan');
+                scanBtnDashboard.disabled = true;
+                scanBtnSecondary.disabled = true;
+                
+                scanFill.style.width = '0%';
+                threatsCount.innerText = '0';
+                optimCount.innerText = '0';
+
+                const phases = [
+                    { time: 3000, text: 'Inicializace jádra a databází hrozeb...', progress: 15 },
+                    { time: 5000, text: 'Skenování operační paměti a spuštěných procesů...', progress: 40 },
+                    { time: 6000, text: 'Heuristická analýza a kontrola registrů...', progress: 75 },
+                    { time: 4000, text: 'Kontrola Dark Webu a optimalizace systému...', progress: 95 },
+                ];
+
+                let currentProgress = 0;
+                let phaseIndex = 0;
+
+                const runPhase = () => {
+                    if (phaseIndex >= phases.length) {
+                        // Skenování dokončeno
+                        scanStatus.innerText = 'Skenování dokončeno!';
+                        scanFill.style.width = '100%';
+                        threatsCount.innerText = '0';
+                        optimCount.innerText = '12'; // Vždy najde něco k optimalizaci
+                        
+                        // Zlepšení bezpečnostního skóre
+                        securityScore.innerText = '98%';
+                        securityScore.classList.remove('status-inactive');
+                        securityScore.classList.add('status-active');
+                        scoreMessage.innerText = 'Systém je optimálně chráněn.';
+                        
+                        scanBtnDashboard.disabled = false;
+                        scanBtnSecondary.disabled = false;
+                        return;
+                    }
+
+                    const phase = phases[phaseIndex];
+                    scanStatus.innerHTML = `<strong>${phase.text}</strong>`;
+                    scanFill.style.width = phase.progress + '%';
+                    
+                    setTimeout(() => {
+                        phaseIndex++;
+                        runPhase();
+                    }, phase.time);
+                };
+                
+                runPhase();
+            };
+
+            scanBtnDashboard.addEventListener('click', startScanSimulation);
+            scanBtnSecondary.addEventListener('click', startScanSimulation);
+        });
+    </script>
+</body>
+</html>
