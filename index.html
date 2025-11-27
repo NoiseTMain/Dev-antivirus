@@ -2,11 +2,11 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V9.6 (Profesionální Komplet)</title>
+    <title>Nexus Prime Security - V9.8 (Dynamická Simulace)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- CSS STYLING V9.6 --- */
+        /* --- CSS STYLING V9.8 --- */
         :root {
             /* Původní Dark Mode */
             --color-dark-bg: #1e1e2c; 
@@ -21,7 +21,7 @@
             --color-danger-red: #dc3545;
             --color-warning-yellow: #ffc107;
             
-            /* Nové - Světlý režim */
+            /* Světlý režim */
             --color-light-bg: #f5f5f5;
             --color-lighter-bg: #ffffff;
             --color-light-text-dark: #333333;
@@ -48,7 +48,7 @@
         .light-mode {
             --app-bg: var(--color-lighter-bg);
             --module-bg: var(--color-light-bg);
-            --content-bg: var(--color-lighter-bg);
+            --content-bg: var(--lighter-bg); /* Použito lighter-bg pro kontrast */
             --text-color: var(--color-light-text-dark);
             --text-muted: var(--color-light-text-grey);
             --input-bg: var(--color-lighter-bg); /* Input pozadí - Bílé */
@@ -348,13 +348,17 @@
              height: 100%;
              width: 0%; 
              background-color: var(--color-accent-blue);
-             animation: loading-animation 5s infinite linear; /* Zpomalená animace */
+             animation: loading-animation 2s infinite linear; /* Pomalá a plynulá */
         }
         @keyframes loading-animation {
              0% { width: 10%; }
              50% { width: 90%; }
              100% { width: 10%; }
         }
+        /* Loading pro Scan - Rychlejší, protože probíhá 10s (delší simulace) */
+         .loading-fill.scan-fill {
+             animation: loading-animation 1s infinite linear; 
+         }
 
     </style>
 </head>
@@ -539,7 +543,7 @@
     </div>
 
     <script>
-        /* --- JAVASCRIPT LOGIKA V9.6 --- */
+        /* --- JAVASCRIPT LOGIKA V9.8 --- */
         const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
         const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
         const ACTIVITY_LOG_KEY = 'nexusPrimeActivityLog';
@@ -552,7 +556,6 @@
         };
         const DEFAULT_PRICE = SUBSCRIPTION_PLANS.one_year.discountedPrice;
         
-        // Piny jsou dynamicky čteny z pinConfig
         let currentUser = null;
         
         // --- DATA A JAZYKOVÉ PROMĚNNÉ ---
@@ -565,28 +568,13 @@
                 "buy_pro": "Koupit PRO licenci", "logout": "Odhlásit se", "scan_run": "Spustit Sken",
                 "scan_repair": "Opravit Vše (1 kliknutí)", "threats_found": "Nalezené hrozby:",
                 "scan_status_ready": "Připraveno ke spuštění.", 
-                "scan_status_running": "Skenování probíhá, prosíme, vyčkejte (5 minut simulace)...", // NOVÝ TEXT
+                "scan_status_running": "Skenování probíhá...", // NOVÝ TEXT
                 "repair_done": "Oprava dokončena! Všechny hrozby byly odstraněny.", 
                 "scan_done": "Skenování dokončeno! Nalezeno %s hrozeb.",
                 "app_perm_scan": "Kontrola oprávnění aplikací", "app_perm_info": "Tyto aplikace mají oprávnění k přístupu k citlivým datům. Měli byste je zkontrolovat.",
                 "app_perm_title": "Oprávnění aplikace", "app_perm_toggle": "Omezit přístup",
                 "app_perm_toggle_on": "Povolit", "app_perm_toggle_off": "Omezit",
                 "vault_title": "Simulovaný Trezor", "vault_desc": "Bezpečně uložte přihlašovací údaje a dokumenty."
-            },
-            "en": {
-                "welcome": "Welcome back,", "paid_active": "PRO Active", "freemium_active": "Freemium",
-                "lock_title": "This feature is locked!", "lock_msg": "PRO license is required to unlock.",
-                "status_active": "Active PRO Version", "status_free": "Freemium (Basic Protection)",
-                "buy_pro": "Buy PRO License", "logout": "Log Out", "scan_run": "Run Scan",
-                "scan_repair": "Repair All (1 Click)", "threats_found": "Threats Found:",
-                "scan_status_ready": "Ready to run.", 
-                "scan_status_running": "Scanning in progress, please wait (5 minute simulation)...",
-                "repair_done": "Repair completed! All threats removed.", 
-                "scan_done": "Scanning complete! %s threats found.",
-                "app_perm_scan": "Application Permissions Check", "app_perm_info": "These apps have access to sensitive data. You should review them.",
-                "app_perm_title": "App Permission", "app_perm_toggle": "Limit Access",
-                "app_perm_toggle_on": "Allow", "app_perm_toggle_off": "Limit",
-                "vault_title": "Simulated Vault", "vault_desc": "Securely store your login credentials and documents."
             }
         };
 
@@ -598,6 +586,17 @@
                  { name: "Zastaralý systémový patch (Kernel)", type: "System Vulnerability", location: "System Core" },
                  { name: "FakeSystemUpdater.apk", type: "Malware/PUP", location: "/storage/downloads" },
                  { name: "Narušení: Primary email", type: "Identity Breach", location: "Dark Web Report" }
+            ],
+            // NOVÉ: Loading texty pro simulaci
+            SCAN_LOADING_MESSAGES: [
+                 "Inicializace jádra a ThreatLab API...",
+                 "Analýza systémových registrů: Klíč B2D-7X...",
+                 "Hloubková kontrola souborového systému (1/3)...",
+                 "Verifikace integrity aplikací třetích stran...",
+                 "Skript: C-1457 - Kontrola potenciálně nebezpečných programů (PUP)...",
+                 "Kontrola oprávnění a sítě (DNS Hijacking)...",
+                 "Kompletní analýza: Zpracování výsledků...",
+                 "Generování souhrnné zprávy... (Finální fáze)"
             ],
             // Idea 11/26 - Oprávnění aplikací
             APP_PERMISSIONS: [
@@ -621,7 +620,6 @@
                  RAM: { total: 8000, used: 5200 },
                  BATTERY: { health: 98, temp: 35.5 }
             },
-            
             IDENTITY_ITEMS: [
                 { name: "Primární e-mail", type: "email", defaultChecked: true },
                 { name: "Záložní e-mail", type: "email", defaultChecked: false },
@@ -655,6 +653,28 @@
         let simulatedThreats = [];
         let selectedPlan = 'one_year'; // Defaultní plán pro platbu
         
+        // --- ČASY SIMULACE (Dynamická 5-10 minut) ---
+        
+        /**
+         * Generuje náhodnou dobu trvání v milisekundách mezi min a max (v sekundách).
+         * @param {number} minSeconds - Minimální doba v sekundách (např. 5 pro 5 minut).
+         * @param {number} maxSeconds - Maximální doba v sekundách (např. 10 pro 10 minut).
+         * @returns {number} Náhodná doba v milisekundách.
+         */
+        const getRandomDuration = (minSeconds, maxSeconds) => {
+             const minMs = minSeconds * 1000;
+             const maxMs = maxSeconds * 1000;
+             // Vrací náhodnou hodnotu mezi minMs a maxMs
+             return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+        };
+
+        // Rozsahy pro simulace (sekundy v kódu = minuty v UI)
+        const DURATION_LONG_MIN = 5; // 5 minut
+        const DURATION_LONG_MAX = 10; // 10 minut (pro Sken, Identity, Zálohu)
+        const DURATION_SHORT_MIN = 3; // 3 minuty
+        const DURATION_SHORT_MAX = 7; // 7 minut (pro Optimalizaci, VPN, Web Shield)
+
+        
         // --- FUNKCE PRO VÝPOČET A TRVALOST DAT ---
         const calculateExpirationDate = (planKey) => {
             const plan = SUBSCRIPTION_PLANS[planKey];
@@ -677,7 +697,7 @@
         };
         
         const getRegisteredUsers = () => { return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY)) || {}; };
-        const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
+        const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERed_USERS_KEY, JSON.stringify(users)); };
         const saveCurrentUserState = () => { if (currentUser) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser)); };
         
         // Kontrola Expirace a downgrade
@@ -764,6 +784,8 @@
             if (moduleId === 'settings') document.getElementById('settings-content').innerHTML = generateSettingsHtml();
             if (moduleId === 'notifications') displayNotifications();
             if (moduleId === 'scan') document.getElementById('scan-content').innerHTML = generateScanHtml();
+            if (moduleId === 'vpn') document.getElementById('vpn-content').innerHTML = generateVpnHtml();
+             if (moduleId === 'identity') document.getElementById('identity-content').innerHTML = generateIdentityGuardHtml();
         };
 
         // --- REALISTICKÝ LOG AKTIVIT ---
@@ -1241,7 +1263,7 @@
         };
 
 
-        // --- VPN (5 minut simulace) ---
+        // --- VPN (Simulace Krátká 3-7 minut) ---
         const generateVpnHtml = () => {
              const options = SIMULATION_DATA.VPN_SERVERS.map(server => 
                  `<option value="${server.replace(/\s/g, '-')}" ${server.includes('Automaticky') ? 'selected' : ''}>${server}</option>`
@@ -1251,89 +1273,105 @@
                  `<option value="${protocol}" ${protocol.includes('WireGuard') ? 'selected' : ''}>${protocol}</option>`
              ).join('');
 
-             return `
-                <div class="dashboard-card">
-                    <div>
-                        <h3 id="vpn-status-header"><i class="fas fa-power-off"></i> Stav: Odpojeno</h3>
-                        <p style="color: var(--text-muted);">Klikněte pro zabezpečení spojení a vyberte server.</p>
+             const statusContent = isVpnConnected 
+                 ? `<div style="padding: 10px; background-color: var(--content-bg); border-radius: 8px;">
+                        <h3 id="vpn-status-header" style="color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Stav: Připojeno</h3>
+                        <p id="vpn-ip-display">IP Adresa: ${currentUser.vpnIp}</p>
+                    </div>`
+                 : `<div style="padding: 10px; background-color: var(--content-bg); border-radius: 8px;">
+                        <h3 id="vpn-status-header" style="color: var(--color-danger-red);"><i class="fas fa-power-off"></i> Stav: Odpojeno</h3>
                         <p id="vpn-ip-display">Vaše IP: ${SIMULATION_DATA.SYSTEM_INFO.LAST_IP}</p>
-                    </div>
+                    </div>`;
+
+             return `
+                <div class="dashboard-card" id="vpn-status-card">
+                    ${statusContent}
                 </div>
                 
                 <h3 style="margin-top: 20px;">Nastavení Připojení</h3>
                 <div class="config-group">
                     <div class="server-list">
                         <label for="vpn-protocol-select" style="display: block; margin-bottom: 5px;">Vybrat Protokol:</label>
-                        <select id="vpn-protocol-select">
+                        <select id="vpn-protocol-select" ${isVpnConnected ? 'disabled' : ''}>
                             ${protocols}
                         </select>
                     </div>
                     <div class="server-list">
                         <label for="vpn-server-select" style="display: block; margin-bottom: 5px;">Vybrat Server (Geolokace):</label>
-                        <select id="vpn-server-select">
+                        <select id="vpn-server-select" ${isVpnConnected ? 'disabled' : ''}>
                             ${options}
                         </select>
                     </div>
                 </div>
-                <button class="primary-btn" id="vpn-toggle">Připojit</button>
+                <button class="primary-btn" id="vpn-toggle" onclick="simulateVpnConnection(this)">${isVpnConnected ? 'Odpojit' : 'Připojit'}</button>
              `;
         };
         
         const simulateVpnConnection = (vpnToggleBtn) => {
              const selectedServer = document.getElementById('vpn-server-select').value.replace(/-/g, ' ');
              const selectedProtocol = document.getElementById('vpn-protocol-select').value;
-             const vpnStatusHeader = document.getElementById('vpn-status-header');
-             const vpnIpDisplay = document.getElementById('vpn-ip-display');
+             const vpnStatusCard = document.getElementById('vpn-status-card');
              
-             if (!isVpnConnected) {
-                vpnToggleBtn.disabled = true;
-                vpnToggleBtn.innerText = 'Probíhá připojování... (5 minut simulace)';
-                vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
-                vpnStatusHeader.innerHTML = `<i class="fas fa-hourglass-half"></i> Stav: Připojování...`;
-                vpnIpDisplay.innerText = 'Navazuji šifrované spojení, prosím, vyčkejte...';
-                
-                logActivity(`Pokus o připojení k VPN serveru: ${selectedServer} (${selectedProtocol}).`);
-                
-                // --- SIMULACE 5 MINUT ---
-                const SIMULATION_TIME = 5000; // 5 vteřin pro test, odpovídá 5 minutám
-                
-                setTimeout(() => {
-                    isVpnConnected = true;
-                    vpnToggleBtn.disabled = false;
-                    vpnToggleBtn.innerText = 'Odpojit';
-                    vpnToggleBtn.style.backgroundColor = 'var(--color-danger-red)';
-                    
-                    const newIp = calculateSimulatedIP(selectedServer);
-                    currentUser.vpnIp = newIp;
-                    saveCurrentUserState();
-                    
-                    vpnStatusHeader.innerHTML = `<i class="fas fa-check-circle"></i> Stav: Připojeno (${selectedServer})`;
-                    vpnIpDisplay.innerText = `IP Adresa: ${newIp} (Protokol: ${selectedProtocol})`;
-                    
-                    logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`, 'var(--color-accent-green)', true);
-                    setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
-                    
-                    let usage = 0;
-                    if(vpnInterval) clearInterval(vpnInterval);
-                    vpnInterval = setInterval(() => {
-                        usage += Math.floor(Math.random() * 5) + 1; 
-                    }, 5000);
-
-                }, SIMULATION_TIME);
-            } else {
+             if (isVpnConnected) {
                 isVpnConnected = false;
                 if(vpnInterval) clearInterval(vpnInterval);
+                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`, 'var(--text-color)');
+                
+                vpnStatusCard.innerHTML = `<div style="padding: 10px; background-color: var(--content-bg); border-radius: 8px;">
+                        <h3 id="vpn-status-header" style="color: var(--color-danger-red);"><i class="fas fa-power-off"></i> Stav: Odpojeno</h3>
+                        <p id="vpn-ip-display">Vaše IP: ${SIMULATION_DATA.SYSTEM_INFO.LAST_IP}</p>
+                    </div>`;
                 vpnToggleBtn.innerText = 'Připojit';
                 vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
-                vpnStatusHeader.innerHTML = `<i class="fas fa-power-off"></i> Stav: Odpojeno`;
-                vpnIpDisplay.innerText = `Vaše IP: ${SIMULATION_DATA.SYSTEM_INFO.LAST_IP}`;
-                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`, 'var(--text-color)');
+                document.getElementById('vpn-protocol-select').disabled = false;
+                document.getElementById('vpn-server-select').disabled = false;
                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
-            }
+                return;
+             }
+
+            vpnToggleBtn.disabled = true;
+            vpnToggleBtn.innerText = 'Probíhá připojování...';
+            vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
+            document.getElementById('vpn-protocol-select').disabled = true;
+            document.getElementById('vpn-server-select').disabled = true;
+            
+            vpnStatusCard.innerHTML = `<div style="padding: 10px; background-color: var(--content-bg); border-radius: 8px;">
+                                           <h3 id="vpn-status-header" style="color: var(--color-warning-yellow);"><i class="fas fa-hourglass-half"></i> Stav: Navazování šifrovaného spojení...</h3>
+                                           <p id="vpn-ip-display">Probíhá handshake (Protokol: ${selectedProtocol})... </p>
+                                           <div class="loading-bar"><div class="loading-fill"></div></div>
+                                       </div>`;
+            
+            logActivity(`Pokus o připojení k VPN serveru: ${selectedServer} (${selectedProtocol}).`);
+            
+            // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
+            const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
+            
+            setTimeout(() => {
+                isVpnConnected = true;
+                vpnToggleBtn.disabled = false;
+                vpnToggleBtn.innerText = 'Odpojit';
+                vpnToggleBtn.style.backgroundColor = 'var(--color-danger-red)';
+                
+                const newIp = calculateSimulatedIP(selectedServer);
+                currentUser.vpnIp = newIp;
+                saveCurrentUserState();
+                
+                vpnStatusCard.innerHTML = `<div style="padding: 10px; background-color: var(--content-bg); border-radius: 8px;">
+                        <h3 id="vpn-status-header" style="color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Stav: Připojeno (${selectedServer})</h3>
+                        <p id="vpn-ip-display">IP Adresa: ${newIp} (Protokol: ${selectedProtocol})</p>
+                    </div>`;
+                
+                logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`, 'var(--color-accent-green)', true);
+                setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
+                
+                if(vpnInterval) clearInterval(vpnInterval);
+                vpnInterval = setInterval(() => {}, 5000); // Fiktivní interval pro aktivitu
+
+            }, duration);
         };
 
 
-        // --- IDENTITY GUARD (5 minut simulace) ---
+        // --- IDENTITY GUARD (Simulace Dlouhá 5-10 minut) ---
         
         const generateIdentityGuardHtml = () => {
              const isPro = currentUser.isPaid;
@@ -1365,15 +1403,37 @@
 
         const handleIdentityProtection = (btn) => {
             btn.disabled = true;
-            btn.innerText = 'Probíhá hloubková kontrola Dark Webu (10 minut simulace)...';
+            btn.innerText = 'Probíhá spouštění hloubkové analýzy Dark Webu...';
             logActivity(`Spuštěna manuální kontrola Identity Guard.`);
             const statusArea = document.getElementById('identity-status-area');
-            statusArea.innerHTML = `<p style="color: var(--color-warning-yellow);">Kontrola probíhá, čekejte...</p><div class="loading-bar"><div class="loading-fill" style="animation-duration: 10s;"></div></div>`;
             
-            // --- SIMULACE 10 MINUT ---
-            const SIMULATION_TIME = 10000; // 10 vteřin pro test
+            // --- SIMULACE PRŮBĚHU (Dynamická Dlouhá Doba) ---
+            const duration = getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
             
+            const messages = SIMULATION_DATA.SCAN_LOADING_MESSAGES.map((msg, index) => {
+                if(index === 0) return "Inicializace Dark Web API a šifrovaného tunelu...";
+                if(index === 1) return "Vyhledávání primárního e-mailu v kompromitovaných databázích...";
+                if(index === 2) return "Křížová kontrola uložených platebních údajů (tokenizace)...";
+                if(index === 3) return "Analýza fiktivních datových sad A-92 / B-85...";
+                if(index === 4) return "Zpracování 95% ověřených zdrojů... (Dokončování)";
+                return msg;
+            }).slice(0, 5); // Zkrácení na 5 klíčových fází
+            
+            let msgIndex = 0;
+            const messageInterval = duration / messages.length; 
+            
+            const updateStatus = () => {
+                 if (msgIndex < messages.length) {
+                     statusArea.innerHTML = `<p style="color: var(--color-warning-yellow);">${messages[msgIndex]}</p><div class="loading-bar"><div class="loading-fill scan-fill"></div></div>`;
+                     msgIndex++;
+                 }
+            };
+            updateStatus();
+            const intervalId = setInterval(updateStatus, messageInterval);
+            
+            // --- Konec SIMULACE ---
             setTimeout(() => {
+                clearInterval(intervalId);
                 btn.disabled = false;
                 btn.innerText = 'Spustit Kontrolu Narušení';
                 
@@ -1386,11 +1446,11 @@
                     alert(breachMessage + ' Přejděte do Identity Guard pro řešení.');
                     statusArea.innerHTML = generateBreachWarning();
                 } else {
-                     statusArea.innerHTML = `<p style="color: var(--color-accent-green); margin-top: 15px;">Žádná nová narušení nenalezena. Vaše data jsou v bezpečí.</p>`;
+                     statusArea.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold; margin-top: 15px;"><i class="fas fa-check-circle"></i> Žádná nová narušení nenalezena. Vaše data jsou v bezpečí.</p>`;
                      logActivity(`Kontrola Identity Guard dokončena. Žádná nová narušení.`, 'var(--color-accent-green)');
                 }
                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-            }, SIMULATION_TIME);
+            }, duration);
         };
         
         const generateBreachWarning = () => {
@@ -1411,13 +1471,12 @@
              currentUser.threatsFound = Math.max(0, currentUser.threatsFound - 1); 
              saveCurrentUserState();
              logActivity(`Identita **Primární e-mail** byla úspěšně zabezpečena.`, 'var(--color-accent-green)', true);
-             document.getElementById('identity-status-area').innerHTML = `<p style="color: var(--color-accent-green); margin-top: 15px;">Únik dat vyřešen! Data jsou opět chráněna.</p>`;
              document.getElementById('identity-content').innerHTML = generateIdentityGuardHtml(); // Překreslení
              setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
         };
 
 
-        // --- CHYTRÝ SKEN (5-10 minut simulace bez odpočtu) ---
+        // --- CHYTRÝ SKEN (Simulace Dlouhá 5-10 minut) ---
         
         const generateSimulatedThreats = () => {
              let threats = [];
@@ -1463,7 +1522,7 @@
              `).join('');
              
              return `
-                 <div id="scan-threat-report" class="config-group" style="border: 2px solid var(--color-danger-red);">
+                 <div id="scan-threat-report" class="config-group" style="border: 2px solid var(--color-danger-red); margin-top: 20px;">
                      <h3><i class="fas fa-bug"></i> Detailní Report Hrozeb</h3>
                      ${headerHtml}
                      ${rowsHtml}
@@ -1499,52 +1558,70 @@
         const startScanSimulation = (isRepair = false) => {
              const scanStatus = document.getElementById('scan-status');
              const scanVisuals = document.getElementById('scan-visuals');
+             
              if (!scanStatus || !scanVisuals) return;
              
+             const scanBtnSecondary = document.getElementById('start-scan-secondary');
+             const repairBtn = document.getElementById('repair-all-btn');
+             if (scanBtnSecondary) scanBtnSecondary.disabled = true;
+             if (repairBtn) repairBtn.disabled = true;
+
              if (isRepair) logActivity(`Spuštěna simulace **OPRAVY** systému.`);
              else logActivity(`Spuštěn Chytrý Sken.`);
              
-             document.getElementById('start-scan-secondary').disabled = true;
-             if (document.getElementById('repair-all-btn')) document.getElementById('repair-all-btn').disabled = true;
+             // --- DYNAMICKÁ DOBA SKENOVÁNÍ (5-10 minut) ---
+             const duration = isRepair ? getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX) : getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
              
-             scanStatus.innerText = isRepair ? 'Probíhá oprava hrozeb, prosíme, vyčkejte...' : _('scan_status_running');
+             const messages = SIMULATION_DATA.SCAN_LOADING_MESSAGES;
+             let msgIndex = 0;
+             const messageInterval = duration / messages.length; 
              
-             // --- ZAJIŠTĚNÍ LOADINGU BEZ ODPOČTU ---
-             const SIMULATION_TIME = isRepair ? 5000 : 8000; // Oprava 5s, Sken 8s (Simulace 5-10 minut)
+             // --- Inicializace vizuálu loadingu ---
              scanVisuals.innerHTML = `
-                 <p>Aktuální stav: <span id="scan-status" style="color: var(--color-warning-yellow);">${scanStatus.innerText}</span></p>
-                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: ${SIMULATION_TIME / 1000}s;"></div></div>
-                 <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">Probíhá hloubková analýza jádra (Simulace bez viditelného odpočtu)</p>
+                 <p style="font-weight: bold;">Stav: <span id="scan-running-status" style="color: var(--color-warning-yellow);">Inicializace...</span></p>
+                 <div class="loading-bar"><div class="loading-fill scan-fill"></div></div>
+                 <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">Probíhá hloubková analýza jádra (Simulace trvá cca ${Math.round(duration / 60000)} minut)</p>
              `;
-             // Konec loading animace se musí řešit pomocí timeoutu, protože je nekonečná
-             
-             setTimeout(() => {
-                 
-                 // Přejmenování statusu, aby se správně našel po timeoutu
-                 const finalScanStatus = document.getElementById('scan-status');
+             const runningStatus = document.getElementById('scan-running-status');
 
+             // Funkce pro aktualizaci textu
+             const updateRunningStatus = () => {
+                 if (msgIndex < messages.length) {
+                     runningStatus.innerText = messages[msgIndex];
+                     msgIndex++;
+                 }
+             };
+
+             updateRunningStatus(); 
+             const intervalId = setInterval(updateRunningStatus, messageInterval);
+             
+             // --- Konec simulace ---
+             setTimeout(() => {
+                 clearInterval(intervalId);
+                 
+                 // Znovu povolit tlačítka a vypsat výsledek
+                 if (scanBtnSecondary) scanBtnSecondary.disabled = false;
+                 if (repairBtn) repairBtn.disabled = false;
+                 
                  if (isRepair) {
                      simulatedThreats = [];
                      currentUser.threatsFound = 0;
-                     finalScanStatus.innerText = _('repair_done');
-                     finalScanStatus.style.color = 'var(--color-accent-green)';
+                     scanStatus.innerText = _('repair_done');
+                     scanStatus.style.color = 'var(--color-accent-green)';
                      logActivity(_('repair_done'), 'var(--color-accent-green)', true);
                  } else {
                      simulatedThreats = generateSimulatedThreats();
                      currentUser.threatsFound = simulatedThreats.length;
-                     finalScanStatus.innerText = _('scan_done').replace('%s', currentUser.threatsFound);
-                     finalScanStatus.style.color = currentUser.threatsFound > 0 ? 'var(--color-danger-red)' : 'var(--color-accent-green)';
+                     scanStatus.innerText = _('scan_done').replace('%s', currentUser.threatsFound);
+                     scanStatus.style.color = currentUser.threatsFound > 0 ? 'var(--color-danger-red)' : 'var(--color-accent-green)';
                      if (currentUser.threatsFound > 0) addNotification(`Nalezeno ${currentUser.threatsFound} kritických hrozeb!`);
                  }
-                 
-                 document.getElementById('start-scan-secondary').disabled = false;
-                 if (document.getElementById('repair-all-btn')) document.getElementById('repair-all-btn').disabled = false;
                  
                  saveCurrentUserState();
                  document.getElementById('scan-content').innerHTML = generateScanHtml();
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
                  
-             }, SIMULATION_TIME);
+             }, duration);
         };
         
         const handleScanToggleChange = (e, item) => {
@@ -1605,7 +1682,7 @@
 
         // --- MODULY DLE IDEÍ ---
         
-        // MODUL OPTIMALIZACE (1 minuta simulace)
+        // MODUL OPTIMALIZACE (Simulace Krátká 3-7 minut)
         const generateOptimizationHtml = () => {
              const freedSpace = Math.floor(Math.random() * 800) + 200; 
              const processes = Math.floor(Math.random() * 10) + 5; 
@@ -1630,18 +1707,16 @@
         
         const handleOptimization = (btn, space, proc) => {
              btn.disabled = true;
-             btn.innerText = "Probíhá optimalizace... (1 minuta simulace)";
-             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěna optimalizace výkonu.`);
              
              const statusDiv = document.getElementById('optimization-status');
              statusDiv.innerHTML = `
-                 <p style="color: var(--color-warning-yellow); margin-top: 10px;">Optimalizace CPU a paměti probíhá...</p>
-                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: 6s;"></div></div>
+                 <p style="font-weight: bold; color: var(--color-warning-yellow);">Provádím hloubkovou analýzu RAM a CPU cyklů...</p>
+                 <div class="loading-bar"><div class="loading-fill"></div></div>
              `;
              
-             // --- SIMULACE 1 MINUTU ---
-             const SIMULATION_TIME = 6000; // 6 vteřin pro test, odpovídá 1 minutě
+             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
+             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
              
              setTimeout(() => {
                  statusDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;">Dokončeno! Uvolněno ${space} MB a zrychleno ${proc} procesů.</p>`;
@@ -1655,17 +1730,18 @@
                  logActivity(`Optimalizace dokončena. Uvolněno ${space} MB.`, 'var(--color-accent-green)', true);
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
                  
-             }, SIMULATION_TIME);
+             }, duration);
         };
         
-        // MODUL WEB SHIELD (Upraveno: odstraněna kontrola URL)
+        // MODUL WEB SHIELD (Simulace Krátká 3-7 minut)
         const generateWebShieldHtml = () => {
              return `
                 <div class="dashboard-card">
                     <h3><i class="fas fa-link"></i> Web Shield Status</h3>
                     <p style="color: var(--color-accent-green);">Štít je aktivní a chrání vás proti phishingovým a malwarovým stránkám.</p>
-                    <button class="primary-btn" id="start-web-scan" onclick="handleWebScan(this)"><i class="fas fa-shield-alt"></i> Spustit Rychlou Kontrolu Štítu</button>
-                    <div id="web-scan-result" style="margin-top: 15px;"></div>
+                    <div id="web-scan-status">
+                       <button class="primary-btn" id="start-web-scan" onclick="handleWebScan(this)"><i class="fas fa-shield-alt"></i> Spustit Rychlou Kontrolu Štítu</button>
+                    </div>
                 </div>
                 <h3 style="margin-top: 20px;">Nastavení Štítu (Více možností)</h3>
                 <div class="config-group">
@@ -1691,28 +1767,26 @@
         
         const handleWebScan = (btn) => {
              btn.disabled = true;
-             btn.innerText = "Probíhá kontrola štítu... (2 minuty simulace)";
-             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěna kontrola Web Shieldu.`);
              
-             const resultDiv = document.getElementById('web-scan-result');
-             resultDiv.innerHTML = `<p style="color: var(--color-warning-yellow);">Ověřování integrity všech ochranných vrstev...</p><div class="loading-bar"><div class="loading-fill" style="animation-duration: 3s;"></div></div>`;
+             const statusDiv = document.getElementById('web-scan-status');
+             statusDiv.innerHTML = `
+                 <p style="font-weight: bold; color: var(--color-warning-yellow);">Ověřování integrity všech ochranných vrstev a DNS zabezpečení...</p>
+                 <div class="loading-bar"><div class="loading-fill"></div></div>
+             `;
              
-             // --- SIMULACE 2 MINUTY ---
-             const SIMULATION_TIME = 3000; // 3 vteřiny pro test, odpovídá 2 minutám
+             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
+             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
              
              setTimeout(() => {
-                 btn.disabled = false;
-                 btn.innerText = "Spustit Rychlou Kontrolu Štítu";
-                 btn.style.backgroundColor = 'var(--color-accent-blue)';
                  
-                 resultDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;"><i class="fas fa-check-circle"></i> Všechny vrstvy štítu jsou plně funkční a aktivní.</p>`;
+                 statusDiv.innerHTML = `<button class="primary-btn" id="start-web-scan" onclick="handleWebScan(this)" style="background-color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Všechny vrstvy Štítu aktivní</button>`;
                  logActivity(`Web Shield kontrola dokončena. Vše v pořádku.`, 'var(--color-accent-green)', true);
-             }, SIMULATION_TIME);
+             }, duration);
         };
 
 
-        // MODUL TREZOR 
+        // MODUL TREZOR (Simulace Krátká 3-7 minut)
         const generateVaultHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1725,9 +1799,10 @@
                         <div class="item-row"><span>Číslo Pasu (Sken)</span><span style="color: var(--color-accent-green);">Aktivní</span></div>
                         <div class="item-row"><span>Heslo pro Sociální Síť</span><span style="color: var(--color-accent-green);">Aktivní</span></div>
                     </div>
-                    
-                    <input type="password" id="vault-master-password" placeholder="Zadejte Master Heslo pro odemčení">
-                    <button class="primary-btn" onclick="handleVaultUnlock(this)"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
+                    <div id="vault-unlock-status">
+                        <input type="password" id="vault-master-password" placeholder="Zadejte Master Heslo pro odemčení">
+                        <button class="primary-btn" id="vault-unlock-btn" onclick="handleVaultUnlock(this)"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
+                    </div>
                     
                     <button class="secondary-btn" onclick="logActivity('Simulace přidání nové položky do Trezoru.')" style="margin-top: 10px;">Přidat Novou Položku</button>
                 </div>
@@ -1736,27 +1811,32 @@
         
         const handleVaultUnlock = (btn) => {
              btn.disabled = true;
-             btn.innerText = 'Ověřování... (1 minuta simulace)';
              logActivity(`Pokus o odemčení trezoru.`);
              
-             // --- SIMULACE 1 MINUTU ---
-             const SIMULATION_TIME = 6000; 
+             const statusDiv = document.getElementById('vault-unlock-status');
+             statusDiv.innerHTML = `
+                 <p style="font-weight: bold; color: var(--color-warning-yellow);">Probíhá dešifrování dat...</p>
+                 <div class="loading-bar"><div class="loading-fill"></div></div>
+             `;
+             
+             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
+             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
              
              setTimeout(() => {
-                 btn.disabled = false;
-                 btn.innerText = 'Odemknout Trezor';
                  
                  if (Math.random() > 0.3) {
                       logActivity(`Trezor úspěšně odemčen.`, 'var(--color-accent-green)');
+                      statusDiv.innerHTML = `<button class="primary-btn" style="background-color: var(--color-accent-green);"><i class="fas fa-lock-open"></i> Trezor Odemčen</button>`;
                       alert('Trezor úspěšně odemčen!');
                  } else {
                       logActivity(`Chyba ověření Master Hesla.`, 'var(--color-danger-red)');
+                      statusDiv.innerHTML = `<button class="primary-btn" id="vault-unlock-btn" onclick="handleVaultUnlock(this)"><i class="fas fa-unlock"></i> Odemknout Trezor</button>`;
                       alert('Chyba: Master Heslo je neplatné.');
                  }
-             }, SIMULATION_TIME);
+             }, duration);
         };
         
-        // MODUL ZÁLOHOVÁNÍ (5 minut simulace)
+        // MODUL ZÁLOHOVÁNÍ (Simulace Dlouhá 5-10 minut)
         const generateBackupHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1778,23 +1858,21 @@
         
         const handleBackup = (btn) => {
              btn.disabled = true;
-             btn.innerText = "Probíhá zálohování... (5 minut simulace)";
-             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěno Cloudové Zálohování.`);
              
              const statusDiv = document.getElementById('backup-status');
              statusDiv.innerHTML = `
-                 <p style="color: var(--color-warning-yellow);">Nahrávání dat do šifrovaného cloudu...</p>
-                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: 5s;"></div></div>
+                 <p style="font-weight: bold; color: var(--color-warning-yellow);">Připojení k šifrovanému cloudovému úložišti a nahrávání dat...</p>
+                 <div class="loading-bar"><div class="loading-fill scan-fill"></div></div>
              `;
              
-             // --- SIMULACE 5 MINUT ---
-             const SIMULATION_TIME = 5000; 
+             // --- SIMULACE DYNAMICKÉ DLOUHÉ DOBY (5-10 minut) ---
+             const duration = getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
              
              setTimeout(() => {
                  statusDiv.innerHTML = `<button class="primary-btn" style="background-color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Zálohování Dokončeno!</button>`;
                  logActivity(`Zálohování dokončeno.`, 'var(--color-accent-green)', true);
-             }, SIMULATION_TIME);
+             }, duration);
         };
 
         // MODUL OCHRANA SOUKROMÍ 
@@ -1834,9 +1912,9 @@
                     ${appHtml}
                 </div>
                 <h3 style="margin-top: 20px;">Wi-Fi Security Scan (PRO)</h3>
-                <div class="config-group">
+                <div class="config-group" id="wifi-scan-area">
                      <p>Status: **Síť je chráněna (WPA3)**</p>
-                     <button class="secondary-btn" onclick="handleWifiScan(this)">Spustit síťový test</button>
+                     <button class="secondary-btn" id="start-wifi-scan-btn" onclick="handleWifiScan(this)">Spustit síťový test</button>
                 </div>
              `;
         };
@@ -1858,26 +1936,29 @@
 
         const handleWifiScan = (btn) => {
              btn.disabled = true;
-             btn.innerText = 'Probíhá hloubková analýza sítě... (1 minuta simulace)';
-             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěna Wi-Fi analýza.`);
              
-             // --- SIMULACE 1 MINUTU ---
-             const SIMULATION_TIME = 6000; 
+             const statusDiv = document.getElementById('wifi-scan-area');
+             statusDiv.innerHTML = `
+                 <p style="font-weight: bold; color: var(--color-warning-yellow);">Provádím hloubkovou analýzu sítě a ověřování DNS...</p>
+                 <div class="loading-bar"><div class="loading-fill"></div></div>
+             `;
+             
+             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
+             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
              
              setTimeout(() => {
-                 btn.disabled = false;
-                 btn.innerText = 'Spustit síťový test';
-                 btn.style.backgroundColor = 'var(--input-border)';
                  
                  if (Math.random() > 0.2) {
                       logActivity(`Wi-Fi sken dokončen. Nalezena jedna menší zranitelnost.`, 'var(--color-warning-yellow)', true);
+                      statusDiv.innerHTML = `<p style="font-weight: bold; color: var(--color-warning-yellow);">Status: Nalezena menší zranitelnost!</p><button class="secondary-btn" id="start-wifi-scan-btn" onclick="handleWifiScan(this)">Opakovat test</button>`;
                       alert('Wi-Fi sken dokončen. Nalezena jedna menší zranitelnost (doporučeno resetování routeru).');
                  } else {
                       logActivity(`Wi-Fi síť je zabezpečená.`, 'var(--color-accent-green)');
+                      statusDiv.innerHTML = `<p style="font-weight: bold; color: var(--color-accent-green);">Status: Síť je zabezpečená (WPA3)</p><button class="secondary-btn" id="start-wifi-scan-btn" onclick="handleWifiScan(this)">Opakovat test</button>`;
                       alert('Wi-Fi síť je zabezpečená.');
                  }
-             }, SIMULATION_TIME);
+             }, duration);
         };
         
         // --- PROFIL A HISTORIE (Vylepšené) ---
@@ -1909,6 +1990,9 @@
              // Zajištění aktualizace textů v novém módu
              makeFunctional(currentUser.isPaid);
              setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
+             if(document.getElementById('settings').classList.contains('hidden') === false) {
+                 document.getElementById('settings-content').innerHTML = generateSettingsHtml();
+             }
         };
 
         const generateSettingsHtml = () => {
@@ -1950,7 +2034,7 @@
                 </div>
 
                 <h3 style="margin-top: 20px;"><i class="fas fa-history"></i> Historie Aktivity</h3>
-                <div class="config-group">
+                <div class="config-group" style="max-height: 200px; overflow-y: auto;">
                     ${logHtml}
                 </div>
                 <button class="secondary-btn" onclick="clearActivityLog()"><i class="fas fa-eraser"></i> Vyčistit log aktivity</button>
@@ -1985,9 +2069,13 @@
             for (const moduleId in modulesConfig) {
                 const moduleContentDiv = document.getElementById(`${moduleId}-content`);
                 if (moduleContentDiv) {
-                    if (moduleId === 'payment_shield' && !isPro) {
-                         moduleContentDiv.innerHTML = modulesConfig[moduleId].freemiumHtml;
-                    } else if (moduleId !== 'payment_shield') {
+                    // Speciální pravidlo pro payment_shield, který nemá -content, ale je vložen přímo
+                    if (moduleId === 'payment_shield') {
+                         const parent = document.getElementById(moduleId);
+                         if (parent) {
+                              parent.innerHTML = isPro ? modulesConfig[moduleId].proHtml : modulesConfig[moduleId].freemiumHtml;
+                         }
+                    } else {
                          moduleContentDiv.innerHTML = isPro ? modulesConfig[moduleId].proHtml : modulesConfig[moduleId].freemiumHtml;
                     }
                 }
@@ -1995,14 +2083,14 @@
 
             // Připojení handlerů pro PRO funkce
             if (isPro) {
-                const vpnToggle = document.getElementById('vpn-toggle');
-                if (vpnToggle) vpnToggle.addEventListener('click', () => simulateVpnConnection(vpnToggle));
-                
                 const scanBtnSecondary = document.getElementById('start-scan-secondary');
                 if (scanBtnSecondary) scanBtnSecondary.addEventListener('click', () => startScanSimulation(false));
                 
                 const identityProtectionBtn = document.getElementById('start-identity-protection-btn');
                 if (identityProtectionBtn) identityProtectionBtn.addEventListener('click', () => handleIdentityProtection(identityProtectionBtn));
+
+                const vpnToggle = document.getElementById('vpn-toggle');
+                if (vpnToggle) vpnToggle.addEventListener('click', () => simulateVpnConnection(vpnToggle));
             }
         };
 
