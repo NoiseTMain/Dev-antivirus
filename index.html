@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V8.4 (Opravená Navigace a Zobrazení Obrany)</title>
+    <title>Nexus Prime Security - V8.5 (Plně Funkční Kybernetická Obrana)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* --- CSS STYLING --- */
@@ -178,6 +178,7 @@
         .config-item:last-child { border-bottom: none; }
         .item-info strong { display: block; }
         .item-info span { font-size: 0.8em; color: var(--color-text-grey); }
+        .config-item:hover { background-color: #35354a; border-radius: 5px; padding: 10px; margin: -5px 0;}
 
         /* Toggle/Checkbox styly */
         .toggle-switch {
@@ -756,7 +757,7 @@
              }).join('');
         };
         
-        // OPRAVENO: Funkce pro Kybernetickou Obranu
+        // OPRAVENO A PONECHÁNO
         const generateCyberDefenseHtml = () => {
              return `<p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany. Aktivace všech funkcí zaručuje **Maximální PRO ochranu**.</p>
                      <div class="config-group">
@@ -764,7 +765,7 @@
                      </div>`;
         };
         
-        // OPRAVENO: Funkce pro Identity Guard
+        // OPRAVENO A PONECHÁNO
         const generateIdentityGuardHtml = () => {
              return `<p style="margin-bottom: 20px;">Vyberte, které osobní údaje chcete monitorovat v Dark Webu.</p>
                      <div class="config-group">
@@ -869,7 +870,7 @@
              }, 3000);
         };
 
-        // OPRAVENO: Opraveno plnění obsahu modulů
+        // OPRAVENO: Zajištěno, že cyber_defense dostane správný HTML obsah.
         const makeFunctional = (isPro) => {
             
             const modulesConfig = {
@@ -970,7 +971,7 @@
             // 3. Nastavení Dashboardu a funkčnosti
             setPaysafeModuleContent(); 
             setDashboardContent(licenseType);
-            makeFunctional(isPro); // Důležité: Nyní volá generování obsahu pro Obranu i Identity Guard
+            makeFunctional(isPro); 
 
             if (message) alert(message);
             switchModule(targetModuleId);
@@ -992,7 +993,7 @@
                 nav.addEventListener('click', (e) => {
                     e.preventDefault();
                     const moduleId = e.currentTarget.getAttribute('data-module');
-                    if (e.currentTarget.classList.contains('locked') && currentUser.username !== 'Vašek') { // Pouze Vašek to má odemčené hned
+                    if (e.currentTarget.classList.contains('locked') && (!currentUser || !currentUser.isPaid)) { 
                         alert("Tato funkce je uzamčena v Freemium verzi. Kupte PRO licenci!");
                     } else {
                         switchModule(moduleId);
