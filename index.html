@@ -2,10 +2,10 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V6.0 (Freemium Model a Tajný Účet)</title>
+    <title>Nexus Prime Security - V6.1 (Freemium s Trvalou Registrací)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* --- CSS STYLING (Většina zůstává z V5.0) --- */
+        /* --- CSS STYLING (Většina z V5.0/V5.1) --- */
         :root {
             --color-dark-bg: #1e1e2c; 
             --color-darker-bg: #151520; 
@@ -42,7 +42,7 @@
             position: relative;
         }
 
-        /* HLAVIČKA S PROFILOVÝM TLAČÍTKEM */
+        /* HLAVIČKA S PROFILOVÝM TLAČÍTKEM A STATUSEM */
         #header {
             background-color: var(--color-darker-bg);
             padding: 10px 20px;
@@ -71,7 +71,13 @@
         }
         #profile-btn:hover { background-color: #2a2a3b; }
         
-        #license-status { display: none; } /* Licenční status je nyní zobrazen na Dashboardu */
+        #user-info-status {
+             text-align: right;
+             font-size: 0.8em;
+             margin-right: 10px;
+        }
+        .status-inactive { color: var(--color-danger-red); } 
+        .status-active { color: var(--color-accent-green); font-weight: bold; } 
 
         /* OBSAHOVÁ OBLAST */
         #content-area {
@@ -135,7 +141,17 @@
             width: 80%;
             max-width: 300px;
         }
-
+        
+        /* Ostatní styly pro moduly - stejné jako V5.1 */
+        #security-score-card {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -144,6 +160,10 @@
     <div id="app-window">
         <header id="header">
              <h1 class="logo">Nexus Prime Security</h1>
+             <div id="user-info-status">
+                 <span id="header-username">Odhlášeno</span><br>
+                 <span id="header-license-status" class="status-inactive">Neaktivní</span>
+             </div>
              <button id="profile-btn" style="font-style: normal;">
                 👤
              </button>
@@ -155,7 +175,7 @@
                 <h2 style="border: none;">Vítejte v Nexus Prime</h2>
                 <p style="color: var(--color-text-grey); margin-bottom: 40px;">Pro pokračování se přihlaste nebo vytvořte účet.</p>
                 <button id="show-login-btn" class="primary-btn">Přihlásit se</button>
-                <button id="show-register-btn" class="secondary-btn">Vytvořit Účet (zdarma)</button>
+                <button id="show-register-btn" class="secondary-btn">Vytvořit Účet</button>
             </div>
 
             <div id="dashboard" class="module hidden">
@@ -173,12 +193,12 @@
             </div>
             
             <div id="register" class="module hidden">
-                 <h2>🔑 Vytvořit Účet (Freemium)</h2>
-                 <p style="margin-bottom: 20px;">Vytvořte si bezplatný účet pro základní ochranu a skenování.</p>
+                 <h2>🔑 Vytvořit Účet</h2>
+                 <p style="margin-bottom: 20px;">Vytvořte si účet pro základní ochranu a skenování.</p>
                  <div id="register-form">
                      <input type="text" id="reg-username" placeholder="Uživatelské jméno">
                      <input type="password" id="reg-password" placeholder="Heslo">
-                     <button id="register-btn" class="primary-btn">Vytvořit Účet</button>
+                     <button id="register-btn" class="primary-btn">Vytvořit Účet a Přihlásit se</button>
                      <button class="secondary-btn" onclick="switchModule('auth_select')">Zpět</button>
                  </div>
             </div>
@@ -252,53 +272,56 @@
 
     <script>
         /* --- JAVASCRIPT LOGIKA --- */
-        const STORAGE_KEY = 'nexusPrimeUser';
+        const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
+        const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
         const PRO_PRICE = 7999;
         
-        // --- GLOBÁLNÍ STAV (Uložený uživatel) ---
+        // --- GLOBÁLNÍ STAV ---
         let currentUser = null;
         
         // PŘESNÁ LOGIKA PINŮ: 3610 + 3610 + 779 = 7999
         const SIMULATED_PIN_VALUES = [3610, 3610, 779]; 
 
-        // --- ZÁKLADNÍ PRVKY ---
-        const navItems = document.querySelectorAll('#bottom-nav .nav-item');
-        const modules = document.querySelectorAll('.module');
-        const dashboardModule = document.getElementById('dashboard');
+        // --- POMOCNÉ FUNKCE A TRVALOST DAT ---
         
-        // --- POMOCNÉ FUNKCE ---
-        const saveCurrentUser = () => {
-             // Uložíme pouze username, zda je placeno a zda je to Vašek/vasek11 (pro detekci při znovunačtení)
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
-                username: currentUser.username, 
-                isPaid: currentUser.isPaid, 
-                isVašek: currentUser.username === 'Vašek' && currentUser.password === 'vasek11',
-                remainingAmount: currentUser.remainingAmount,
-                pinIndex: currentUser.pinIndex
-            }));
+        const getRegisteredUsers = () => {
+             const users = localStorage.getItem(REGISTERED_USERS_KEY);
+             return users ? JSON.parse(users) : {};
+        };
+        
+        const saveRegisteredUsers = (users) => {
+             localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users));
+        };
+        
+        const saveCurrentUserState = () => {
+             if (currentUser) {
+                 localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+             }
         };
 
-        const loadState = () => {
-            const stored = localStorage.getItem(STORAGE_KEY);
+        const loadCurrentUserState = () => {
+            const stored = localStorage.getItem(CURRENT_USER_KEY);
             if (stored) {
-                const storedUser = JSON.parse(stored);
-                currentUser = {
-                    username: storedUser.username,
-                    isPaid: storedUser.isPaid || storedUser.isVašek, // Vašek má vždy PRO
-                    isVašek: storedUser.isVašek,
-                    remainingAmount: storedUser.remainingAmount || PRO_PRICE,
-                    pinIndex: storedUser.pinIndex || 0
-                };
+                currentUser = JSON.parse(stored);
+                // Nastavení admin účtu
+                 if (currentUser.username === 'Vašek' && currentUser.password === 'vasek11') {
+                     currentUser.isPaid = true;
+                     currentUser.remainingAmount = 0;
+                     currentUser.pinIndex = SIMULATED_PIN_VALUES.length;
+                 }
+                return true;
             }
-            // Pokud není přihlášen, vracíme null a budeme muset ukázat auth_select
+            return false;
         };
 
         const switchModule = (moduleId) => {
+            // Kontrola přihlášení
             if (!currentUser && moduleId !== 'auth_select' && moduleId !== 'login' && moduleId !== 'register') {
                 alert('Musíte se nejprve přihlásit.');
                 moduleId = 'auth_select';
             }
-
+            
+            // Zobrazení/skrytí modulů
             modules.forEach(m => m.classList.add('hidden'));
             document.getElementById(moduleId).classList.remove('hidden');
 
@@ -317,73 +340,99 @@
         const handleRegister = () => {
             const regUsername = document.getElementById('reg-username').value.trim();
             const regPassword = document.getElementById('reg-password').value.trim();
-            
+            const users = getRegisteredUsers();
+
             if (regUsername.length < 3 || regPassword.length < 5) {
                 alert('Prosím, zadejte platné uživatelské jméno (min 3 znaky) a heslo (min 5 znaků).');
                 return;
             }
+            if (users[regUsername]) {
+                 alert(`Uživatelské jméno "${regUsername}" je již obsazeno.`);
+                 return;
+            }
             
-            // Normální registrace - freemium uživatel
-            currentUser = {
+            // Registrace nového Freemium uživatele
+            const newUser = {
                 username: regUsername,
-                password: regPassword, // Heslo nemusíme ukládat do LS, slouží jen pro ověření při první reg.
+                password: regPassword, 
                 isPaid: false,
-                isVašek: false,
                 remainingAmount: PRO_PRICE,
                 pinIndex: 0
             };
-            saveCurrentUser();
+            
+            users[regUsername] = newUser;
+            saveRegisteredUsers(users);
+
+            currentUser = newUser;
+            saveCurrentUserState();
+            
             unlockFeaturesUI('Freemium', `Vítejte, ${regUsername}! Váš účet byl vytvořen.`, 'dashboard');
         };
         
         const handleLogin = () => {
             const loginUsername = document.getElementById('login-username').value.trim();
             const loginPassword = document.getElementById('login-password').value.trim();
-
-            const storedUser = JSON.parse(localStorage.getItem(STORAGE_KEY));
-
-            // 1. Tajný PRO účet (Vašek)
+            const users = getRegisteredUsers();
+            
+            // 1. Tajný PRO účet (ADMIN)
             if (loginUsername === 'Vašek' && loginPassword === 'vasek11') {
                  currentUser = {
                     username: 'Vašek',
                     password: 'vasek11',
                     isPaid: true,
-                    isVašek: true,
                     remainingAmount: 0,
                     pinIndex: SIMULATED_PIN_VALUES.length
                 };
-                saveCurrentUser();
+                saveCurrentUserState();
                 unlockFeaturesUI('PRO', `Vítejte zpět, ${currentUser.username}! PRO verze je automaticky aktivována.`, 'dashboard');
                 return;
             }
 
-            // 2. Normální uložený účet (Kontrola v localStorage)
-            if (storedUser && storedUser.username === loginUsername) {
-                 // Předpokládáme, že pokud je uživatel uložen, je přihlášení OK (Pro účely simulace neověřujeme uložené heslo)
-                 
-                 // Musíme rekonstruovat objekt currentUser
-                 currentUser = {
-                    username: storedUser.username,
-                    isPaid: storedUser.isPaid,
-                    isVašek: storedUser.isVašek,
-                    remainingAmount: storedUser.remainingAmount || PRO_PRICE,
-                    pinIndex: storedUser.pinIndex || 0
-                 };
-
+            // 2. Normální uložený účet
+            const storedUser = users[loginUsername];
+            if (storedUser && storedUser.password === loginPassword) {
+                 currentUser = storedUser;
+                 saveCurrentUserState();
                  const licenseType = currentUser.isPaid ? 'PRO' : 'Freemium';
                  unlockFeaturesUI(licenseType, `Vítejte zpět, ${currentUser.username}!`, 'dashboard');
                  return;
             }
 
             // 3. Chyba
-            document.getElementById('login-message').innerText = 'Chyba: Neplatné přihlašovací údaje.';
+            document.getElementById('login-message').innerText = 'Chyba: Neplatné uživatelské jméno nebo heslo.';
             document.getElementById('login-message').style.color = 'var(--color-danger-red)';
+        };
+
+        const handleLogout = () => {
+             currentUser = null;
+             localStorage.removeItem(CURRENT_USER_KEY);
+             
+             // Reset UI a přechod na přihlášení
+             document.getElementById('header-username').innerText = 'Odhlášeno';
+             document.getElementById('header-license-status').innerText = 'Neaktivní';
+             document.getElementById('header-license-status').classList.remove('status-active');
+             document.getElementById('header-license-status').classList.add('status-inactive');
+             
+             // Reset navigačních prvků
+             navItems.forEach(nav => {
+                 const navModule = nav.getAttribute('data-module');
+                 if (navModule !== 'dashboard' && navModule !== 'scan') {
+                    nav.classList.add('locked');
+                    nav.querySelector('i').innerHTML = '🔒';
+                 }
+             });
+             
+             // Vyčištění dashboardu
+             document.getElementById('dashboard').innerHTML = '';
+             switchModule('auth_select');
         };
 
         // --- LOGIKA PLATEBNÍ SIMULACE ---
         
         const updateRemainingDisplay = () => {
              const remainingAmountSpan = document.getElementById('remaining-amount');
+             if (!remainingAmountSpan) return; // Může být, pokud už je zaplaceno
+             
              remainingAmountSpan.innerText = currentUser.remainingAmount.toLocaleString('cs-CZ') + ' Kč';
 
              if (currentUser.remainingAmount <= 0) {
@@ -391,9 +440,18 @@
                  remainingAmountSpan.classList.add('text-paid');
                  
                  currentUser.isPaid = true;
-                 saveCurrentUser();
                  
-                 // Změna obsahu Payment boxu
+                 // Uložíme do databáze (LS) a aktuálního uživatele
+                 const users = getRegisteredUsers();
+                 if (users[currentUser.username]) {
+                    users[currentUser.username].isPaid = true;
+                    users[currentUser.username].remainingAmount = 0;
+                    users[currentUser.username].pinIndex = currentUser.pinIndex;
+                    saveRegisteredUsers(users);
+                 }
+                 saveCurrentUserState();
+
+                 // Změna obsahu Payment boxu na potvrzení
                  const paysafeBox = document.getElementById('paysafe-payment-box');
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);">Platba dokončena!</h3>
@@ -405,6 +463,7 @@
          
          const addLog = (message, color) => {
              const transactionLog = document.getElementById('transaction-log');
+             if (!transactionLog) return;
              const p = document.createElement('p');
              p.innerHTML = `<span style="color: ${color};">• ${message}</span>`;
              transactionLog.insertBefore(p, transactionLog.children[1]); 
@@ -455,7 +514,7 @@
                      paysafePinInput.disabled = false;
                      paysafePinInput.placeholder = "Zadejte další PIN Paysafecard";
                  }
-                 saveCurrentUser();
+                 saveCurrentUserState(); 
 
              }, 2500); 
          };
@@ -465,123 +524,79 @@
         const setDashboardContent = (licenseType) => {
              const isPro = licenseType === 'PRO';
              const color = isPro ? 'var(--color-accent-green)' : 'var(--color-danger-red)';
-             const statusText = isPro ? 'Optimální zabezpečení PRO!' : 'Vyžaduje okamžitou akci (Freemium)!';
+             const statusText = isPro ? 'Optimální zabezpečení PRO!' : 'Vyžaduje okamžitou akci!';
              const score = isPro ? '100%' : '65%';
-             const buttonText = isPro ? 'Spustit PRO Sken' : 'Upgrade na PRO';
-
-             let paysafeBoxHtml = '';
-             if (!isPro) {
-                // Přidáme box pro platbu pro Freemium uživatele
-                 paysafeBoxHtml = document.getElementById('paysafe').innerHTML;
-                 dashboardModule.innerHTML = `
-                    <h2>Dashboard Nexus ${licenseType}</h2>
-                    <div id="security-score-card" style="background: linear-gradient(135deg, #2a2a3b, #1e1e2c); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                        <div id="score-gauge" style="border-radius: 50%; border: 8px solid ${color}; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; font-size: 2em; margin: 0 auto;">${score}</div>
-                        <h3 style="margin-top: 15px;">Stav Systému</h3>
-                        <p id="system-status-text" style="color: ${color}; font-size: 1.1em; font-weight: bold;">${statusText}</p>
-                        <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: ${isPro ? 'Nyní' : 'Nikdy'}</p>
-                        <button id="start-smart-scan-dashboard" class="primary-btn" ${isPro ? '' : 'disabled'}>${buttonText}</button>
-                    </div>
-                    
-                    <h3 style="margin-top: 20px; font-weight: 500;">Aktivace PRO Verze</h3>
-                    ${paysafeBoxHtml}
-                    <button class="primary-btn" onclick="switchModule('paysafe')">Přejít k platbě</button>
-                    
-                `;
-                // Musíme znovupřipojit Paysafe handlery, protože jsme obsah přepsali
-                const paysafeDiv = dashboardModule.querySelector('#paysafe-payment-box');
-                if (paysafeDiv) {
-                    // Update display before attaching handlers
-                    updateRemainingDisplay();
-                    document.getElementById('submit-pin-btn').addEventListener('click', handlePaysafePinSubmit);
-                }
-
-             } else {
-                 dashboardModule.innerHTML = `
-                    <h2>Dashboard Nexus PRO</h2>
-                    <div id="security-score-card" style="background: linear-gradient(135deg, #1e2c1e, #152015); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                        <div id="score-gauge" style="border-radius: 50%; border: 8px solid ${color}; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; font-size: 2em; margin: 0 auto;">${score}</div>
-                        <h3 style="margin-top: 15px;">Stav Systému</h3>
-                        <p id="system-status-text" style="color: ${color}; font-size: 1.1em; font-weight: bold;">${statusText}</p>
-                        <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: Nyní</p>
-                        <button id="start-smart-scan-dashboard" class="primary-btn">Spustit Sken</button>
-                    </div>
-                    <h3 style="margin-top: 20px; font-weight: 500;">Přehled Licence</h3>
-                    <div style="background-color: #2a2a3b; padding: 15px; border-radius: 10px;">
-                        <p>Uživatel: <strong>${currentUser.username}</strong></p>
-                        <p>Stav: <span style="color: var(--color-accent-green);">Aktivní PRO verze</span></p>
-                        <p style="margin-top: 10px; font-size: 0.9em;">Všechny funkce jsou odemčeny a nastaveny na maximální ochranu.</p>
-                        <button class="secondary-btn" onclick="handleLogout()">Odhlásit se</button>
-                    </div>
-                 `;
-             }
+             const buttonText = isPro ? 'Spustit PRO Sken' : 'Koupit PRO verzi';
              
-             // Povolení skenování v PRO verzi a připojení handleru pro obě verze (pokud je tlačítko přítomno)
+             const dashboardModule = document.getElementById('dashboard');
+             
+             dashboardModule.innerHTML = `
+                <h2>Dashboard Nexus ${isPro ? 'PRO' : 'Freemium'}</h2>
+                <div id="security-score-card" style="background: linear-gradient(135deg, ${isPro ? '#1e2c1e' : '#2a2a3b'}, ${isPro ? '#152015' : '#1e1e2c'}); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <div id="score-gauge" style="border-radius: 50%; border: 8px solid ${color}; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; font-size: 2em; margin: 0 auto;">${score}</div>
+                    <h3 style="margin-top: 15px;">Stav Systému</h3>
+                    <p id="system-status-text" style="color: ${color}; font-size: 1.1em; font-weight: bold;">${statusText}</p>
+                    <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: ${isPro ? 'Nyní' : 'Nikdy'}</p>
+                    <button id="start-smart-scan-dashboard" class="primary-btn">${buttonText}</button>
+                </div>
+                
+                <h3 style="margin-top: 20px; font-weight: 500;">Přehled Licence</h3>
+                <div style="background-color: #2a2a3b; padding: 15px; border-radius: 10px;">
+                    <p>Uživatel: <strong>${currentUser.username}</strong></p>
+                    <p>Stav: <span style="color: ${color};">${isPro ? 'Aktivní PRO verze' : 'Freemium (Základní ochrana)'}</span></p>
+                    ${isPro ? '' : `<button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`}
+                </div>
+             `;
+             
+             // Povolení skenování/přesměrování
              const scanBtn = document.getElementById('start-smart-scan-dashboard');
              if (scanBtn) {
                  if (isPro) {
-                     scanBtn.disabled = false;
                      scanBtn.addEventListener('click', () => switchModule('scan'));
                  } else {
-                     scanBtn.addEventListener('click', () => alert('Upgrade na PRO pro spuštění skenu!'));
+                     scanBtn.addEventListener('click', () => switchModule('paysafe'));
                  }
              }
         };
 
-        const handleLogout = () => {
-             currentUser = null;
-             localStorage.removeItem(STORAGE_KEY);
-             // Reset navigačních prvků na zamčené
-             navItems.forEach(nav => {
-                 nav.classList.add('locked');
-                 if (nav.getAttribute('data-module') !== 'dashboard' && nav.getAttribute('data-module') !== 'scan') {
-                     nav.querySelector('i').innerHTML = '🔒';
-                 }
-             });
-             // Vyčištění dashboardu
-             dashboardModule.innerHTML = '';
-             // Přechod na přihlašovací obrazovku
-             switchModule('auth_select');
-        };
 
         const unlockFeaturesUI = (licenseType, message, targetModuleId) => {
             const isPro = licenseType === 'PRO';
 
-            // 1. Změna stavu navigace
+            // 1. Nastavení Hlavičky
+            document.getElementById('header-username').innerText = currentUser.username;
+            document.getElementById('header-license-status').innerText = isPro ? 'PRO aktivní' : 'Freemium';
+            document.getElementById('header-license-status').className = isPro ? 'status-active' : 'status-inactive';
+
+            // 2. Nastavení Navigace (zámky)
             navItems.forEach(nav => {
                 const navModule = nav.getAttribute('data-module');
-                nav.classList.remove('locked');
                 
-                // Odemkneme i Freemium modul (scan, dashboard)
-                if (navModule !== 'dashboard' && navModule !== 'scan') {
-                    // Odemkneme PRO moduly pouze pro PRO licenci
-                    if (isPro) {
-                        const icons = { 'cyber_defense': '🛡️', 'vpn': '🌐', 'settings': '⚙️', 'identity': '🕵️' };
-                        nav.querySelector('i').innerHTML = icons[navModule] || '✅';
-                    } else {
-                        nav.classList.add('locked');
-                        nav.querySelector('i').innerHTML = '🔒';
-                    }
+                if (navModule === 'dashboard' || navModule === 'scan') {
+                    nav.classList.remove('locked');
+                    nav.querySelector('i').innerHTML = navModule === 'dashboard' ? '🏠' : '✨';
+                    return;
+                }
+                
+                if (isPro) {
+                    nav.classList.remove('locked');
+                    const icons = { 'cyber_defense': '🛡️', 'vpn': '🌐', 'settings': '⚙️', 'identity': '🕵️' };
+                    nav.querySelector('i').innerHTML = icons[navModule] || '✅';
+                } else {
+                    nav.classList.add('locked');
+                    nav.querySelector('i').innerHTML = '🔒';
                 }
             });
             
-            // 2. Nastavení Dashboardu
+            // 3. Nastavení Dashboardu a funkčnosti
             setDashboardContent(licenseType);
+            makeFunctional(isPro);
 
-            // 3. Zprovoznění interaktivních prvků (jen pokud je PRO)
-            if (isPro) {
-                makeFunctional(true);
-            } else {
-                makeFunctional(false); // Pro Freemium jen scan je limitován
-            }
-
-            // 4. Přechod na modul
             if (message) alert(message);
             switchModule(targetModuleId);
         };
         
-        // --- FUNKCE PRO ZPROVOZNĚNÍ FUNKCIONALITY (Přidány zde) ---
-        // (Zde se definují makeFunctional a simulace VPN/Scan/Identity, které jsou stejné jako ve V5.1, ale nyní přijímají argument isPro)
+        // --- FUNKČNOST MODULŮ (Stejná jako V5.1, ale uzamčeno ve Freemium) ---
         
         let isVpnConnected = false;
         
@@ -590,55 +605,71 @@
         let threatsFound = 0;
         const startScanSimulation = (isRepair = false) => { /* ... Logika Scan ... */ };
 
-        // Aktualizovaná makeFunctional s podporou Freemium/PRO
         const makeFunctional = (isPro) => {
             
-            // Odemčení/uzamčení přepínačů v Cyber Defense
-            const cyberContent = document.getElementById('cyber-content');
-            if (isPro) {
-                cyberContent.innerHTML = ''; // Vyčistí "uzamčeno" zprávu
-                // Přidání funkčnosti pro Cyber Defense (Z V4.2/V5.1)
-                cyberContent.innerHTML = `
-                    <div id="cyber-features-list">
-                        </div>
-                `;
-                // Povolení přepínačů
-                document.querySelectorAll('.toggle-switch input').forEach(toggle => {
-                    toggle.disabled = false;
-                    toggle.addEventListener('change', (e) => {
-                        const state = e.target.checked ? 'zapnuto' : 'vypnuto';
-                        console.log(`Funkce ${e.target.id} je nyní ${state}`);
-                    });
-                });
-            } else {
-                 cyberContent.innerHTML = `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`;
-            }
-            
-            // Ostatní moduly
-            const modulesToUnlock = ['vpn', 'identity', 'settings'];
+            // Odemykání/Uzamykání obsahu pro PRO moduly
+            const modulesToUnlock = ['scan', 'cyber_defense', 'vpn', 'identity', 'settings'];
             modulesToUnlock.forEach(moduleId => {
-                const moduleContent = document.getElementById(`${moduleId}-content`);
+                const moduleContent = document.getElementById(`${moduleId}-content`) || document.getElementById(moduleId).querySelector('.premium-feature');
+                if (!moduleContent) return;
+
                 if (isPro) {
                     moduleContent.classList.remove('locked');
-                    // Zde by byla komplexní PRO funkčnost
+                    moduleContent.innerHTML = ''; // Vyčistí "uzamčeno" zprávu
+
+                    // Speciální nastavení pro moduly, které mají interakci
+                    if (moduleId === 'scan') {
+                         moduleContent.innerHTML = `
+                            <div id="scan-visuals">
+                                <p>Aktuální stav: <span id="scan-status">Připraveno ke spuštění.</span></p>
+                                <div id="scan-progress-bar" style="height: 15px; background-color: var(--color-border); border-radius: 8px; overflow: hidden; margin: 10px 0;">
+                                    <div id="scan-fill" style="height: 100%; width: 0%; background-color: var(--color-accent-blue); transition: width 0.5s;"></div>
+                                </div>
+                            </div>
+                            <div id="scan-results" style="margin-top: 30px; background-color: #2a2a3b; padding: 15px; border-radius: 8px;">
+                                <h3>Sumář výsledků</h3>
+                                <p>Nalezené hrozby (<span style="color: var(--color-danger-red);">Vážné</span>): <span id="threats-count" style="font-weight: bold;">0</span></p>
+                                <p>Optimalizační položky: <span id="optim-count" style="font-weight: bold;">0</span></p>
+                                <button id="repair-btn" class="primary-btn hidden">Spustit Opravu</button>
+                                <button id="start-scan-secondary" class="secondary-btn" style="background-color: var(--color-border); color: var(--color-text-light);">Spustit Sken</button>
+                            </div>
+                        `;
+                        document.getElementById('start-scan-secondary').addEventListener('click', () => {
+                            startScanSimulation(false);
+                        });
+                    } else if (moduleId === 'vpn') {
+                         moduleContent.innerHTML = `
+                            <div class="premium-feature">
+                                <div>
+                                    <h3>Stav: Odpojeno</h3>
+                                    <p style="color: var(--color-text-grey);">Klikněte pro zabezpečení spojení.</p>
+                                </div>
+                                <button class="primary-btn" id="vpn-toggle">Připojit</button>
+                            </div>
+                        `;
+                        document.getElementById('vpn-toggle').addEventListener('click', () => {
+                            simulateVpnConnection(document.getElementById('vpn-toggle'));
+                        });
+                    } else if (moduleId === 'settings') {
+                        moduleContent.innerHTML = `<p>Nastavení jsou nyní odemčena. Váš účet: ${currentUser.username}.</p>`;
+                    }
+
                 } else {
+                    // Freemium/Uzamčeno
                     moduleContent.classList.add('locked');
                     moduleContent.innerHTML = `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`;
+                    // Speciální nastavení pro Sken - vždy viditelný, ale uzamčený
+                    if (moduleId === 'scan') {
+                         moduleContent.innerHTML = `<p style="color: var(--color-danger-red);">Pro skenování celého systému je vyžadována **PRO licence**. Použijte Sken z Dashboardu (Omezená verze).</p>`;
+                    }
                 }
             });
-
-            // Speciální pravidla pro Sken
-            const scanContent = document.getElementById('scan-content');
-            if (scanContent) {
-                // Sken je v Freemium verzi pouze částečně přístupný (jen pro demo), ale pro PRO je plně funkční
-                // Zde ponecháme logiku pro plně funkční sken z V5.1 (aktivní po PRO)
-            }
         };
 
         // --- INICIALIZACE ---
         
         document.addEventListener('DOMContentLoaded', () => {
-            loadState();
+            loadCurrentUserState();
 
             // Připojení handlerů pro autentizaci
             document.getElementById('profile-btn').addEventListener('click', () => switchModule('auth_select'));
@@ -646,9 +677,15 @@
             document.getElementById('show-register-btn').addEventListener('click', () => switchModule('register'));
             document.getElementById('register-btn').addEventListener('click', handleRegister);
             document.getElementById('login-btn').addEventListener('click', handleLogin);
+            
+            // Připojení Paysafe handleru (je v samostatném modulu)
+            const submitPinBtn = document.getElementById('submit-pin-btn');
+            if(submitPinBtn) submitPinBtn.addEventListener('click', handlePaysafePinSubmit);
+
 
             if (currentUser) {
                 const licenseType = currentUser.isPaid ? 'PRO' : 'Freemium';
+                updateRemainingDisplay(); // Nastaví platební status (pokud je modul viditelný)
                 unlockFeaturesUI(licenseType, null, 'dashboard');
             } else {
                 switchModule('auth_select');
