@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V9.0 (Kompletní)</title>
+    <title>Nexus Prime Security - V9.5 (Profesionální Komplet)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -138,7 +138,7 @@
             padding: 1px 5px;
             font-size: 0.7em;
             font-weight: bold;
-            display: none; /* Skryto defaultně */
+            display: none; 
         }
         .notification-indicator.active::after {
              display: inline-block;
@@ -153,7 +153,7 @@
         }
         .module { animation: fadeIn 0.5s; }
         .module.hidden { display: none; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1); } }
 
         h2 { color: var(--text-color); border-bottom: 1px solid var(--hr-color); padding-bottom: 10px; margin-bottom: 20px; font-weight: 500; font-size: 1.4em;}
         
@@ -192,7 +192,7 @@
              margin-top: 30px;
              transition: background-color 0.3s;
         }
-        .form-group input {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--input-border);
@@ -323,6 +323,12 @@
         #vpn-ip-display {
              color: var(--color-warning-yellow);
         }
+        .item-row {
+             display: flex;
+             justify-content: space-between;
+             padding: 5px 0;
+             align-items: center;
+        }
 
     </style>
 </head>
@@ -447,6 +453,33 @@
                  <h2><i class="fas fa-user-secret"></i> Ochrana Soukromí</h2>
                  <div id="privacy-content" class="premium-feature"></div>
             </div>
+            
+             <div id="payment_shield" class="module hidden">
+                 <h2><i class="fas fa-money-check-alt"></i> Štít pro Platby</h2>
+                 <div id="payment-shield-content" class="premium-feature">
+                     <div class="dashboard-card">
+                         <h3><i class="fas fa-shield-virus"></i> Ochrana Bankovních Aplikací</h3>
+                         <p style="color: var(--text-muted);">Zajišťuje bezpečné prostředí pro bankovní a platební aplikace. **PRO aktivní**</p>
+                         <div class="config-group">
+                             <div class="config-item">
+                                 <div class="item-info">
+                                     <strong>Kontrola Wi-Fi připojení</strong>
+                                     <span>Ověřuje zabezpečení sítě před spuštěním aplikace.</span>
+                                 </div>
+                                 <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
+                             </div>
+                             <div class="config-item">
+                                 <div class="item-info">
+                                     <strong>Ochrana proti snímání obrazovky</strong>
+                                     <span>Brání aplikacím třetích stran ve snímání obsahu.</span>
+                                 </div>
+                                 <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
+                             </div>
+                         </div>
+                         <button class="secondary-btn">Spravovat chráněné aplikace</button>
+                     </div>
+                 </div>
+            </div>
 
 
         </main>
@@ -473,21 +506,31 @@
              <a href="#" class="nav-item locked" data-module="settings" id="settings-nav">
                 <i class="fas fa-cogs"></i> Profil
             </a>
+             <a href="#" class="nav-item locked" data-module="payment_shield" id="payment_shield-nav">
+                <i class="fas fa-money-check-alt"></i> Platby
+            </a>
         </nav>
     </div>
 
     <script>
-        /* --- JAVASCRIPT LOGIKA --- */
+        /* --- JAVASCRIPT LOGIKA V9.5 --- */
         const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
         const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
         const ACTIVITY_LOG_KEY = 'nexusPrimeActivityLog';
         const NOTIFICATIONS_KEY = 'nexusPrimeNotifications';
-        const PRO_PRICE = 7999;
+        
+        // --- CENA A NOVÉ LICENCE (Upraveno dle požadavku) ---
+        const SUBSCRIPTION_PLANS = {
+            'half_year': { days: 182, fullPrice: 3999, discountedPrice: 3799, name: "Půl roku (5% Sleva)" },
+            'one_year': { days: 365, fullPrice: 7999, discountedPrice: 7599, name: "Jeden rok (5% Sleva)" },
+            'lifetime': { days: 9999, fullPrice: 19999, discountedPrice: 18999, name: "Doživotně (5% Sleva)" }
+        };
+        const DEFAULT_PRICE = SUBSCRIPTION_PLANS.one_year.discountedPrice;
         const SIMULATED_PIN_VALUES = [3610, 3610, 779]; 
 
         let currentUser = null;
         
-        // --- DATA A JAZYKOVÉ PROMĚNNÉ (Idea 25, 30) ---
+        // --- DATA A JAZYKOVÉ PROMĚNNÉ ---
         
         const i18n = {
             "cs": {
@@ -497,7 +540,7 @@
                 "buy_pro": "Koupit PRO licenci", "logout": "Odhlásit se", "scan_run": "Spustit Sken",
                 "scan_repair": "Opravit Vše (1 kliknutí)", "threats_found": "Nalezené hrozby:",
                 "scan_status_ready": "Připraveno ke spuštění.", "scan_status_running": "Skenování probíhá...",
-                "repair_done": "Oprava dokončena!", "scan_done": "Skenování dokončeno! Nalezeno %s hrozeb.",
+                "repair_done": "Oprava dokončena! Všechny hrozby byly odstraněny.", "scan_done": "Skenování dokončeno! Nalezeno %s hrozeb.",
                 "app_perm_scan": "Kontrola oprávnění aplikací", "app_perm_info": "Tyto aplikace mají oprávnění k přístupu k citlivým datům. Měli byste je zkontrolovat.",
                 "app_perm_title": "Oprávnění aplikace", "app_perm_toggle": "Omezit přístup",
                 "app_perm_toggle_on": "Povolit", "app_perm_toggle_off": "Omezit",
@@ -510,7 +553,7 @@
                 "buy_pro": "Buy PRO License", "logout": "Log Out", "scan_run": "Run Scan",
                 "scan_repair": "Repair All (1 Click)", "threats_found": "Threats Found:",
                 "scan_status_ready": "Ready to run.", "scan_status_running": "Scanning in progress...",
-                "repair_done": "Repair completed!", "scan_done": "Scanning complete! %s threats found.",
+                "repair_done": "Repair completed! All threats removed.", "scan_done": "Scanning complete! %s threats found.",
                 "app_perm_scan": "Application Permissions Check", "app_perm_info": "These apps have access to sensitive data. You should review them.",
                 "app_perm_title": "App Permission", "app_perm_toggle": "Limit Access",
                 "app_perm_toggle_on": "Allow", "app_perm_toggle_off": "Limit",
@@ -529,11 +572,11 @@
             ],
             // Idea 11/26 - Oprávnění aplikací
             APP_PERMISSIONS: [
-                 { name: "Facebook", type: "Social", permissions: ["Poloha", "Mikrofon", "Kontakty"] },
-                 { name: "Bankovní App", type: "Finance", permissions: ["Síť", "Stav telefonu"] },
-                 { name: "Hra XYZ", type: "Game", permissions: ["Kontakty", "Galerie"] },
-                 { name: "Kamera", type: "System", permissions: ["Poloha", "Mikrofon", "Galerie"] },
-                 { name: "Simulovaná Špehovací App", type: "Malware", permissions: ["Poloha", "Mikrofon", "Síť", "Galerie"] }
+                 { name: "Facebook", type: "Social", permissions: ["Poloha", "Mikrofon", "Kontakty"], restricted: false },
+                 { name: "Bankovní App", type: "Finance", permissions: ["Síť", "Stav telefonu"], restricted: false },
+                 { name: "Hra XYZ", type: "Game", permissions: ["Kontakty", "Galerie"], restricted: false },
+                 { name: "Kamera", type: "System", permissions: ["Poloha", "Mikrofon", "Galerie"], restricted: false },
+                 { name: "Simulovaná Špehovací App", type: "Malware", permissions: ["Poloha", "Mikrofon", "Síť", "Galerie"], restricted: false }
             ],
             // Idea 6 - VPN Protokoly
             VPN_PROTOCOLS: ["WireGuard (Doporučeno)", "OpenVPN", "IKEv2"],
@@ -556,12 +599,14 @@
                 { name: "Číslo kreditní karty (4 cifry)", type: "card", defaultChecked: true },
                 { name: "Rodné číslo", type: "social", defaultChecked: true },
                 { name: "Telefonní číslo", type: "phone", defaultChecked: true },
-                { name: "Uživatelské jméno (sociální sítě)", type: "username", defaultChecked: true },
+                { name: "Uživatelské jmé (sociální sítě)", type: "username", defaultChecked: true },
             ],
             SCAN_AREAS: [
                 { name: "Systémové soubory (jádro OS)", default: true },
                 { name: "Aplikace třetích stran", default: true },
                 { name: "Registry a databáze", default: true },
+                { name: "Simulované Adware skripty", default: true },
+                { name: "Potenciálně nežádoucí programy (PUP)", default: true },
             ],
             VPN_SERVERS: [
                 "Automaticky (Nejrychlejší)", "Česká republika (Praha 1)", "Německo (Frankfurt)", 
@@ -573,7 +618,10 @@
                 "banka.cz": false,
                 "phishing.com": true,
                 "securelogin.net": true
-            }
+            },
+            // NOVÉ: Plánování Skenu
+            SCAN_SCHEDULES: ["Vypnuto", "Týdně (Neděle 2:00)", "Denně (23:00)"],
+            
         };
 
         let currentLang = 'cs';
@@ -583,12 +631,22 @@
         let vpnInterval = null;
         let isVpnConnected = false;
         let simulatedThreats = [];
+        let selectedPlan = 'one_year'; // Defaultní plán pro platbu
         
-        // --- FUNKCE PRO VÝPOČET A TRVALOST DAT (Idea 5, 28) ---
-        const calculateExpirationDate = () => {
+        // --- FUNKCE PRO VÝPOČET A TRVALOST DAT ---
+        const calculateExpirationDate = (planKey) => {
+            const plan = SUBSCRIPTION_PLANS[planKey];
+            if (!plan) return null;
+            
             const today = new Date();
-            today.setFullYear(today.getFullYear() + 1);
-            return today.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'numeric', day: 'numeric' });
+            if (planKey === 'lifetime') {
+                // Doživotní licence se nastaví na velmi vzdálené datum
+                today.setFullYear(today.getFullYear() + 20); 
+                return today.toLocaleDateString('cs-CZ');
+            }
+            
+            today.setDate(today.getDate() + plan.days);
+            return today.toLocaleDateString('cs-CZ');
         };
         
         const calculateSimulatedIP = (serverName) => {
@@ -606,24 +664,28 @@
         const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
         const saveCurrentUserState = () => { if (currentUser) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser)); };
         
-        // NOVÁ: Kontrola Expirace a downgrade (Idea 5)
+        // Kontrola Expirace a downgrade
         const checkLicenseExpiration = (user) => {
             if (user.isPaid && user.license_expiration_date) {
-                const expiry = new Date(user.license_expiration_date.split('.').reverse().join('-'));
-                const today = new Date();
-                today.setHours(0, 0, 0, 0); // Pro přesné porovnání dat
-                
-                if (expiry < today) {
-                    user.isPaid = false;
-                    user.remainingAmount = PRO_PRICE;
-                    user.license_expiration_date = null;
-                    user.userLevel = Math.max(1, user.userLevel - 2); // Snížení levelu za neprodloužení
-                    logActivity(`VAROVÁNÍ: PRO licence vypršela dne ${expiry.toLocaleDateString('cs-CZ')}. Přepnuto na Freemium.`, 'var(--color-danger-red)');
-                    alert('VAROVÁNÍ: Vaše PRO licence vypršela. Byly uzamčeny PRO funkce.');
-                    return false; // Expirováno
+                const parts = user.license_expiration_date.split('.');
+                // Převod z DD. MM. RRRR na RRRR-MM-DD pro správnou konstrukci Data
+                if (parts.length === 3) {
+                    const expiry = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); 
+                    
+                    if (expiry < today) {
+                        user.isPaid = false;
+                        user.remainingAmount = SUBSCRIPTION_PLANS.one_year.discountedPrice;
+                        user.license_expiration_date = null;
+                        user.license_key = null; // Odstranění klíče
+                        logActivity(`VAROVÁNÍ: PRO licence vypršela. Přepnuto na Freemium.`, 'var(--color-danger-red)');
+                        // Nealertovat automaticky, aby se to chovalo nenápadněji
+                        return false; 
+                    }
                 }
             }
-            return user.isPaid; // Vrátí aktuální stav
+            return user.isPaid; 
         };
 
         const loadCurrentUserState = () => { 
@@ -637,18 +699,18 @@
                      username: fullUser.username,
                      password: fullUser.password,
                      isPaid: fullUser.isPaid || false,
-                     remainingAmount: fullUser.remainingAmount || PRO_PRICE,
+                     remainingAmount: fullUser.remainingAmount || DEFAULT_PRICE,
                      pinIndex: fullUser.pinIndex || 0,
                      license_expiration_date: fullUser.license_expiration_date || null,
-                     userLevel: fullUser.userLevel || 1, // NOVÉ: Uživatelská úroveň (Idea 28)
-                     currentTheme: fullUser.currentTheme || 'dark', // NOVÉ: Téma (Idea 30)
-                     vpnIp: fullUser.vpnIp || SIMULATION_DATA.SYSTEM_INFO.LAST_IP, // NOVÉ: IP (Idea 6)
-                     hasBreach: fullUser.hasBreach || false, // NOVÉ: Porušení identity (Idea 2)
-                     threatsFound: fullUser.threatsFound || 0, // NOVÉ: Počet hrozeb
+                     currentTheme: fullUser.currentTheme || 'dark',
+                     vpnIp: fullUser.vpnIp || SIMULATION_DATA.SYSTEM_INFO.LAST_IP,
+                     hasBreach: fullUser.hasBreach || false,
+                     threatsFound: fullUser.threatsFound || (fullUser.isPaid ? 0 : 5),
+                     license_key: fullUser.license_key || null, // NOVÉ: Licenční klíč
+                     scan_schedule: fullUser.scan_schedule || 'Vypnuto', // NOVÉ: Plán skenu
                      
                  };
                  
-                 // Kontrola expirace po načtení
                  checkLicenseExpiration(currentUser);
                  saveCurrentUserState();
                  return true;
@@ -658,13 +720,14 @@
         
         const switchModule = (moduleId) => {
             if (!currentUser && moduleId !== 'auth_select' && moduleId !== 'login' && moduleId !== 'register') {
-                alert(_('Must_login')); // Zjednodušeno
+                alert(_('Must_login')); 
                 moduleId = 'auth_select';
             }
             // Zamykání PRO modulů při Freemium
             const isPro = currentUser ? currentUser.isPaid : false;
-            const proModules = ['scan', 'vpn', 'identity', 'optimization', 'web_shield', 'vault', 'privacy', 'backup', 'settings'];
-            if (!isPro && proModules.includes(moduleId)) {
+            // Přidán payment_shield
+            const proModules = ['scan', 'vpn', 'identity', 'optimization', 'web_shield', 'vault', 'privacy', 'backup', 'payment_shield'];
+            if (!isPro && proModules.includes(moduleId) && moduleId !== 'settings') {
                  alert(`${_('lock_title')} ${_('lock_msg')}`);
                  return;
             }
@@ -675,7 +738,7 @@
             const activeNav = document.querySelector(`.nav-item[data-module="${moduleId}"]`) || document.getElementById('dashboard-nav');
             if (activeNav) activeNav.classList.add('active');
             
-            // Speciální funkce pro nové moduly (pro jejich dynamické načtení)
+            // Speciální funkce pro nové moduly
             if (moduleId === 'paysafe') setPaysafeModuleContent();
             if (moduleId === 'optimization') document.getElementById('optimization-content').innerHTML = generateOptimizationHtml();
             if (moduleId === 'web_shield') document.getElementById('web-shield-content').innerHTML = generateWebShieldHtml();
@@ -684,10 +747,12 @@
             if (moduleId === 'privacy') document.getElementById('privacy-content').innerHTML = generatePrivacyHtml();
             if (moduleId === 'settings') document.getElementById('settings-content').innerHTML = generateSettingsHtml();
             if (moduleId === 'notifications') displayNotifications();
+            if (moduleId === 'scan') document.getElementById('scan-content').innerHTML = generateScanHtml();
         };
 
         // --- REALISTICKÝ LOG AKTIVIT ---
-        const logActivity = (description, color = 'var(--color-text-light)') => {
+        // UPOZORNĚNÍ: Odstraněno automatické přidávání do Notifikací pro běžné logy
+        const logActivity = (description, color = 'var(--color-text-light)', isNotification = false) => {
             if (!currentUser) return;
             const logEntry = {
                 timestamp: new Date().toLocaleDateString('cs-CZ') + ' ' + new Date().toLocaleTimeString('cs-CZ'),
@@ -699,13 +764,13 @@
             logs.unshift(logEntry); 
             localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(logs.slice(0, 50)));
             
-            // Pokud je to chyba/hrozba, přidat i do Notifikací
-            if (color === 'var(--color-danger-red)') {
+            // Notifikace pouze pro explicitně označené nebo kritické události
+            if (isNotification || color === 'var(--color-danger-red)') {
                 addNotification(description);
             }
         };
 
-        // --- NOTIFIKACE (Idea 7) ---
+        // --- NOTIFIKACE (Vypnuto pro běžné logy) ---
         const getNotifications = () => { return JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY)) || []; };
         const saveNotifications = (notes) => { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notes)); };
         
@@ -764,7 +829,7 @@
         const clearNotifications = () => {
              saveNotifications([]);
              displayNotifications();
-             logActivity("Upozornění vymazána z Centra Notifikací.");
+             logActivity("Upozornění vymazána z Centra Notifikací.", 'var(--color-text-light)', true);
         };
 
         // --- AUTENTIZACE ---
@@ -782,27 +847,42 @@
                   return;
              }
              
-             // NOVÉ: UserLevel, Theme, VPN IP, Threats
+             // Nastavení nových polí
              const newUser = { 
                  username: regUsername, 
                  password: regPassword, 
                  isPaid: false, 
-                 remainingAmount: PRO_PRICE, 
+                 remainingAmount: DEFAULT_PRICE, 
                  pinIndex: 0, 
                  license_expiration_date: null,
-                 userLevel: 1, 
                  currentTheme: 'dark',
                  vpnIp: SIMULATION_DATA.SYSTEM_INFO.LAST_IP,
-                 threatsFound: 5 // Freemium začíná s hrozbami
+                 hasBreach: false,
+                 threatsFound: 5,
+                 license_key: null,
+                 scan_schedule: 'Vypnuto'
              };
              users[regUsername] = newUser;
              saveRegisteredUsers(users);
              currentUser = newUser;
              saveCurrentUserState();
-             logActivity(`Registrace nového účtu: ${regUsername}.`);
+             logActivity(`Registrace nového účtu: ${regUsername}.`, 'var(--color-text-light)', true);
              unlockFeaturesUI('Freemium', `${_('welcome')} ${regUsername}! Váš účet byl vytvořen.`, 'dashboard');
         };
         
+        const generateLicenseKey = () => {
+             // Generuje fiktivní 5x5 licenční klíč
+             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+             let key = '';
+             for (let i = 0; i < 5; i++) {
+                 for (let j = 0; j < 5; j++) {
+                     key += chars.charAt(Math.floor(Math.random() * chars.length));
+                 }
+                 if (i < 4) key += '-';
+             }
+             return key;
+        };
+
         const handleLogin = () => { 
              const loginUsername = document.getElementById('login-username').value.trim();
              const loginPassword = document.getElementById('login-password').value.trim();
@@ -810,14 +890,14 @@
              
              // Speciální účet pro testování PRO verze
              if (loginUsername === 'Vašek' && loginPassword === 'vasek11') {
-                  // Zkontroluje, zda Vašek má expiraci, pokud ne, nastaví ji na rok dopředu (simulace aktivace)
                   const existingVašek = users['Vašek'];
                   let expirationDate = existingVašek ? existingVašek.license_expiration_date : null;
                   
-                  // Pokud Vašek není v users nebo mu vypršela licence, nastavíme mu ji znovu
-                  if (!expirationDate || new Date(expirationDate.split('.').reverse().join('-')) < new Date()) {
-                       expirationDate = calculateExpirationDate();
+                  if (!expirationDate || checkLicenseExpiration({ isPaid: true, license_expiration_date: expirationDate })) {
+                       expirationDate = calculateExpirationDate('one_year');
                   }
+                  
+                  const licenseKey = existingVašek && existingVašek.license_key ? existingVašek.license_key : generateLicenseKey();
 
                   currentUser = { 
                       username: 'Vašek', 
@@ -826,16 +906,18 @@
                       remainingAmount: 0, 
                       pinIndex: SIMULATED_PIN_VALUES.length,
                       license_expiration_date: expirationDate,
-                      userLevel: 10,
                       currentTheme: existingVašek ? existingVašek.currentTheme : 'dark',
                       vpnIp: SIMULATION_DATA.SYSTEM_INFO.LAST_IP,
-                      threatsFound: 0
+                      hasBreach: false,
+                      threatsFound: 0,
+                      license_key: licenseKey,
+                      scan_schedule: existingVašek ? existingVašek.scan_schedule : 'Týdně (Neděle 2:00)'
                   };
                   
                   users['Vašek'] = currentUser;
                   saveRegisteredUsers(users);
                   saveCurrentUserState();
-                  logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`);
+                  logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`, 'var(--color-text-light)', true);
                   unlockFeaturesUI('PRO', `${_('welcome')} ${currentUser.username}! PRO verze je automaticky aktivována.`, 'dashboard');
                   return;
              }
@@ -844,7 +926,6 @@
              if (storedUser && storedUser.password === loginPassword) {
                   currentUser = storedUser;
                   
-                  // Kontrola expirace při přihlášení
                   const wasPaid = currentUser.isPaid;
                   checkLicenseExpiration(currentUser);
                   
@@ -852,7 +933,7 @@
                   const licenseType = currentUser.isPaid ? 'PRO' : 'Freemium';
                   const message = (wasPaid && !currentUser.isPaid) ? `Licence vypršela. ${_('welcome')} ${currentUser.username}!` : `${_('welcome')} ${currentUser.username}!`;
                   
-                  logActivity(`Úspěšné přihlášení uživatele ${currentUser.username}.`);
+                  logActivity(`Úspěšné přihlášení uživatele ${currentUser.username}.`, 'var(--color-text-light)');
                   unlockFeaturesUI(licenseType, message, 'dashboard');
                   return;
              }
@@ -862,17 +943,17 @@
         };
         
         const handleLogout = () => { 
-             logActivity(`Odhlášení uživatele ${currentUser.username}.`);
+             logActivity(`Odhlášení uživatele ${currentUser.username}.`, 'var(--color-text-light)', true);
              currentUser = null;
              isVpnConnected = false;
              if(vpnInterval) clearInterval(vpnInterval);
              localStorage.removeItem(CURRENT_USER_KEY);
-             localStorage.removeItem(NOTIFICATIONS_KEY); // Smazat notifikace při odhlášení
+             localStorage.removeItem(NOTIFICATIONS_KEY); 
              
              document.getElementById('header-username').innerText = 'Odhlášeno';
              document.getElementById('header-license-status').innerText = 'Neaktivní';
              document.getElementById('header-license-status').className = 'status-inactive';
-             document.getElementById('app-window').className = 'dark-mode'; // Reset tématu
+             document.getElementById('app-window').className = 'dark-mode'; 
              document.querySelectorAll('.nav-item').forEach(nav => {
                  nav.classList.add('locked'); nav.querySelector('i').innerHTML = '🔒'; 
              });
@@ -881,42 +962,50 @@
              switchModule('auth_select');
         };
 
-        // --- PLATEBNÍ MODUL LOGIKA (Původní + Expirace) ---
+        // --- PLATEBNÍ MODUL LOGIKA (Nové plány) ---
          const updateRemainingDisplay = () => {
-             // ... Původní logika
              const remainingAmountSpan = document.getElementById('remaining-amount');
+             const currentPlanKey = document.getElementById('plan-select').value;
+             const price = SUBSCRIPTION_PLANS[currentPlanKey].discountedPrice;
+             
              if (!remainingAmountSpan || !currentUser) return;
              
+             // Nastaví zbývající částku k zaplacení pro vybraný plán
+             currentUser.remainingAmount = price;
              remainingAmountSpan.innerText = currentUser.remainingAmount.toLocaleString('cs-CZ') + ' Kč';
-
+             selectedPlan = currentPlanKey;
+             
+             const submitPinBtn = document.getElementById('submit-pin-btn');
+             const paysafePinInput = document.getElementById('paysafe-pin-input');
+             if (submitPinBtn) submitPinBtn.disabled = false;
+             if (paysafePinInput) paysafePinInput.disabled = false;
+             
+             // Pokud byla zaplacena celá částka, aktivovat PRO
              if (currentUser.remainingAmount <= 0) {
-                 remainingAmountSpan.classList.remove('text-remaining');
-                 remainingAmountSpan.classList.add('text-paid');
-                 
-                 // NOVÉ: Kalkulace a uložení data expirace
-                 const expirationDate = calculateExpirationDate();
+                 const expirationDate = calculateExpirationDate(selectedPlan);
+                 const licenseKey = generateLicenseKey();
+
                  currentUser.isPaid = true;
                  currentUser.license_expiration_date = expirationDate;
                  currentUser.threatsFound = 0;
-                 currentUser.userLevel = Math.max(currentUser.userLevel, 2); // Zvýšení Levelu
+                 currentUser.license_key = licenseKey;
                  
                  const users = getRegisteredUsers();
                  if (users[currentUser.username]) {
                     users[currentUser.username].isPaid = true;
                     users[currentUser.username].remainingAmount = 0;
-                    users[currentUser.username].pinIndex = currentUser.pinIndex;
-                    users[currentUser.username].license_expiration_date = expirationDate; // Uložení expirace
+                    users[currentUser.username].license_expiration_date = expirationDate; 
                     users[currentUser.username].threatsFound = 0;
-                    users[currentUser.username].userLevel = currentUser.userLevel;
+                    users[currentUser.username].license_key = licenseKey;
                     saveRegisteredUsers(users);
                  }
                  saveCurrentUserState();
-                 logActivity(`Aktivace PRO licence dokončena. Platnost do ${expirationDate}.`, 'var(--color-accent-green)');
+                 logActivity(`Aktivace PRO licence (${SUBSCRIPTION_PLANS[selectedPlan].name}) dokončena. Platnost do ${expirationDate}.`, 'var(--color-accent-green)', true);
 
                  const paysafeBox = document.getElementById('paysafe-payment-box');
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Platba dokončena!</h3>
-                    <p>Licence **Nexus PRO** byla úspěšně aktivována s platností do **${expirationDate}**.</p>
+                    <p>Licence **Nexus PRO** na **${SUBSCRIPTION_PLANS[selectedPlan].name}** byla úspěšně aktivována s platností do **${expirationDate}**.</p>
                     <button class="primary-btn" onclick="unlockFeaturesUI('PRO', 'Gratulujeme! PRO verze je aktivní.', 'dashboard')">Pokračovat na Dashboard</button>
                  `;
              }
@@ -936,13 +1025,12 @@
              const submitPinBtn = document.getElementById('submit-pin-btn');
              const pin = paysafePinInput.value.trim();
              
-             // Původní ověření
              if (pin.length !== 16 || !/^\d+$/.test(pin)) {
                  addLog("Chyba: PIN musí být 16místné číslo.", "var(--color-danger-red)");
                  return;
              }
              
-             if (currentUser.pinIndex >= SIMULATED_PIN_VALUES.length || currentUser.isPaid) {
+             if (currentUser.pinIndex >= SIMULATED_PIN_VALUES.length || currentUser.remainingAmount <= 0) {
                   addLog("Platba již byla dokončena nebo vyčerpán počet testovacích PINů.", "var(--color-accent-green)");
                   return;
              }
@@ -984,32 +1072,36 @@
         
         const setPaysafeModuleContent = () => {
              const paysafeBox = document.getElementById('paysafe-payment-box');
-             if (!currentUser || currentUser.isPaid) {
+             
+             if (currentUser && currentUser.isPaid) {
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> PRO licence je aktivní.</h3>
                     <p>Platnost do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong>.</p>
-                    <h4 style="margin-top: 20px;"><i class="fas fa-file-invoice"></i> Správa Předplatného (Idea 21)</h4>
-                    <p>Datum poslední faktury: 15. 11. 2025</p>
-                    <p>Typ platby: Paysafecard (PIN # ${SIMULATED_PIN_VALUES.length})</p>
+                    <h4 style="margin-top: 20px;"><i class="fas fa-file-invoice"></i> Správa Předplatného</h4>
+                    <p>Licenční Klíč: <strong>${currentUser.license_key || 'Není definován'}</strong></p>
+                    <p>Typ Platby: Paysafecard (Poslední PIN: ${currentUser.pinIndex})</p>
                  `;
                  return;
              }
              
-             // NOVÉ: Varování před expirací, pokud je propadlá
-             if (!currentUser.isPaid && currentUser.license_expiration_date) {
-                 paysafeBox.innerHTML = `
-                    <h3 style="color: var(--color-danger-red);"><i class="fas fa-exclamation-triangle"></i> LICENCE PROPADLA!</h3>
-                    <p>Vaše PRO licence vypršela dne <strong>${currentUser.license_expiration_date}</strong>. Pro obnovení funkcí prosím pokračujte platbou.</p>
-                    <hr style="border-color: var(--color-danger-red); margin: 20px 0;">
-                 `;
-             } else {
-                 paysafeBox.innerHTML = '';
-             }
+             const planOptions = Object.keys(SUBSCRIPTION_PLANS).map(key => {
+                 const plan = SUBSCRIPTION_PLANS[key];
+                 return `<option value="${key}">
+                            ${plan.name} - ${plan.discountedPrice.toLocaleString('cs-CZ')} Kč 
+                            (Původní: ${plan.fullPrice.toLocaleString('cs-CZ')} Kč)
+                         </option>`;
+             }).join('');
 
-             paysafeBox.innerHTML += `
-                <h4>Nexus PRO (Roční licence): <span style="color: var(--color-accent-blue);">7 999 Kč</span></h4>
+
+             paysafeBox.innerHTML = `
+                <h4>Vybrat Předplatné s 5% Slevou</h4>
+                <div class="form-group">
+                    <select id="plan-select" onchange="updateRemainingDisplay()">
+                        ${planOptions}
+                    </select>
+                </div>
                 <div id="paysafe-status-bar" style="padding: 15px; background-color: var(--input-bg); border-radius: 8px; font-size: 1.2em; font-weight: bold; margin-bottom: 20px; transition: background-color 0.3s;">
-                    Zbývající částka k úhradě: <span id="remaining-amount" class="text-remaining">${currentUser.remainingAmount.toLocaleString('cs-CZ')} Kč</span>
+                    Zbývající částka k úhradě: <span id="remaining-amount" class="text-remaining">${DEFAULT_PRICE.toLocaleString('cs-CZ')} Kč</span>
                 </div>
                 <div class="paysafe-input-area">
                     <input type="text" id="paysafe-pin-input" placeholder="Zadejte 16místný PIN Paysafecard" maxlength="16">
@@ -1029,8 +1121,8 @@
              if (threats > 0) {
                  score -= (threats * 10);
              }
-             if (!isPro && currentUser.threatsFound > 0) score = 65; // Freemium Max 65%
-             if (SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30))) { // Idea 13 - Starý patch
+             if (!isPro && currentUser.threatsFound > 0) score = 65; 
+             if (SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30))) { 
                  score -= 5;
              }
              return Math.max(50, score) + '%';
@@ -1054,7 +1146,6 @@
                     <p>Stav licence: <span style="color: ${color};">${_('status_free')}</span></p>
                   `;
                   
-            // NOVÉ: Live statistiky a doporučení (Idea 3, 8)
             const ramUsed = SIMULATION_DATA.HW_STATS.RAM.used;
             const ramTotal = SIMULATION_DATA.HW_STATS.RAM.total;
             const batteryTemp = SIMULATION_DATA.HW_STATS.BATTERY.temp;
@@ -1062,9 +1153,10 @@
             const recommendation = currentUser.threatsFound > 0 ? 
                  `<p style="color: var(--color-danger-red); font-weight: bold; margin-top: 10px;">DOPORUČENÍ: Okamžitě spusťte "Opravit Vše" ve Skenu!</p>` :
                  isPro ? 
-                 `<p style="color: var(--color-accent-blue); margin-top: 10px;">DOPORUČENÍ: Zkontrolujte stav Identity Guard v Trezoru.</p>` :
+                 `<p style="color: var(--color-accent-blue); margin-top: 10px;">DOPORUČENÍ: Zkontrolujte stav Identity Guard.</p>` :
                  `<p style="color: var(--color-warning-yellow); margin-top: 10px;">DOPORUČENÍ: Kupte PRO verzi pro 100% ochranu!</p>`;
              
+             const updateNeeded = SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30));
 
              dashboardModule.innerHTML = `
                 <h2><i class="fas fa-home"></i> Domovská Obrazovka</h2>
@@ -1076,7 +1168,7 @@
                     <button id="start-smart-scan-dashboard" class="primary-btn" style="background-color: ${currentUser.threatsFound > 0 ? 'var(--color-danger-red)' : 'var(--color-accent-blue)'};">${buttonText}</button>
                 </div>
                 
-                <h3 style="margin-top: 20px; font-weight: 500;"><i class="fas fa-desktop"></i> Živé Statistiky (Idea 8)</h3>
+                <h3 style="margin-top: 20px; font-weight: 500;"><i class="fas fa-desktop"></i> Živé Statistiky</h3>
                 <div class="dashboard-card">
                     <div class="stat-widget">
                          <span>RAM Využití:</span>
@@ -1086,9 +1178,9 @@
                          <span>Teplota Baterie:</span>
                          <span style="color: var(--color-accent-green);">${batteryTemp}°C</span>
                     </div>
-                     <div class="stat-widget">
-                         <span>Uživatelský Level: (Idea 28)</span>
-                         <span style="color: var(--color-warning-yellow);"><i class="fas fa-star"></i> **${currentUser.userLevel}**</span>
+                    <div class="stat-widget">
+                         <span>Status Kernelu:</span>
+                         <span style="color: ${updateNeeded ? 'var(--color-danger-red)' : 'var(--color-accent-green)'};">${updateNeeded ? 'Zastaralý!' : 'Aktuální'}</span>
                     </div>
                 </div>
                 
@@ -1113,17 +1205,16 @@
                  }
              }
              
-             // Vizualni upozorneni na nebezpeci
              const header = document.getElementById('header');
              if (currentUser.threatsFound > 0) {
-                 header.style.backgroundColor = 'rgba(220, 53, 69, 0.4)'; // Jemná červená
+                 header.style.backgroundColor = 'rgba(220, 53, 69, 0.4)'; 
              } else {
-                 header.style.backgroundColor = 'var(--app-bg)'; // Normalní
+                 header.style.backgroundColor = 'var(--app-bg)'; 
              }
         };
 
 
-        // --- VPN (Vylepšená) ---
+        // --- VPN ---
         const generateVpnHtml = () => {
              const options = SIMULATION_DATA.VPN_SERVERS.map(server => 
                  `<option value="${server.replace(/\s/g, '-')}" ${server.includes('Automaticky') ? 'selected' : ''}>${server}</option>`
@@ -1142,7 +1233,7 @@
                     </div>
                 </div>
                 
-                <h3 style="margin-top: 20px;">Nastavení Připojení (Idea 6)</h3>
+                <h3 style="margin-top: 20px;">Nastavení Připojení</h3>
                 <div class="config-group">
                     <div class="server-list">
                         <label for="vpn-protocol-select" style="display: block; margin-bottom: 5px;">Vybrat Protokol:</label>
@@ -1189,17 +1280,16 @@
                     vpnStatusHeader.innerHTML = `<i class="fas fa-check-circle"></i> Stav: Připojeno (${selectedServer})`;
                     vpnIpDisplay.innerText = `IP Adresa: ${newIp} (Protokol: ${selectedProtocol})`;
                     
-                    logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`, 'var(--color-accent-green)');
-                    setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); // Update Dashboard IP
+                    logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`, 'var(--color-accent-green)', true);
+                    setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
                     
-                    // Simulace toku dat (Idea 8)
+                    // Simulace toku dat
                     let usage = 0;
+                    if(vpnInterval) clearInterval(vpnInterval);
                     vpnInterval = setInterval(() => {
                         usage += Math.floor(Math.random() * 5) + 1; // 1-5 MB/s
-                        logActivity(`VPN aktivní. Tok dat: ${usage} MB staženo.`, 'var(--color-text-grey)');
+                        // logActivity(`VPN aktivní. Tok dat: ${usage} MB staženo.`, 'var(--color-text-grey)'); // Vypnuto - příliš častý log
                     }, 5000);
-                    
-                    levelUp(1); // Zvýšení levelu za použití VPN
 
                 }, 3500);
             } else {
@@ -1209,36 +1299,68 @@
                 vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
                 vpnStatusHeader.innerHTML = `<i class="fas fa-power-off"></i> Stav: Odpojeno`;
                 vpnIpDisplay.innerText = `Vaše IP: ${SIMULATION_DATA.SYSTEM_INFO.LAST_IP}`;
-                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`);
-                setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); // Update Dashboard IP
+                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`, 'var(--color-text-light)');
+                setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
             }
         };
 
 
-        // --- IDENTITY GUARD (Vylepšený) ---
+        // --- IDENTITY GUARD (Opravená) ---
         
-        const handleIdentityProtection = () => {
-            const statusArea = document.getElementById('identity-status-area');
-            const button = document.getElementById('start-identity-protection-btn');
-            
-            // ... (zbytek logiky pro výběr položek)
-            // ... (zkráceno pro délku, ale původní logika zachována)
+        const generateIdentityGuardHtml = () => {
+             const isPro = currentUser.isPaid;
+             const items = SIMULATION_DATA.IDENTITY_ITEMS.map((item, index) => {
+                 return `<div class="config-item">
+                            <div class="item-info">
+                                <strong>${item.name}</strong>
+                                <span>Typ: ${item.type}</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="identity-${index}" ${item.defaultChecked ? 'checked' : ''} onchange="logActivity('Změněno monitorování pro: ${item.name}.')">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>`;
+             }).join('');
+             
+             const isPaidContent = `<p style="margin-bottom: 20px;">Vyberte, které osobní údaje chcete monitorovat v Dark Webu.</p>
+                     ${generateBreachWarning()}
+                     <div class="config-group" id="identity-checkbox-list">
+                        ${items}
+                     </div>
+                     <button id="start-identity-protection-btn" class="primary-btn" style="margin-top: 15px;"><i class="fas fa-search-dollar"></i> Spustit Kontrolu Narušení</button>
+                     <div id="identity-status-area" style="margin-top: 15px;">
+                         <p style="color: var(--text-muted);">Kontrola je spuštěna na pozadí. Klikněte pro **manuální spuštění**.</p>
+                     </div>
+                     `;
+            return isPro ? isPaidContent : `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>`;
+        };
 
-            // Simulace nálezu narušení po aktivaci (Idea 2)
-            if (!currentUser.hasBreach && Math.random() < 0.5) { // 50% šance na nález narušení
-                setTimeout(() => {
+        const handleIdentityProtection = (btn) => {
+            btn.disabled = true;
+            btn.innerText = 'Probíhá hloubková kontrola Dark Webu...';
+            logActivity(`Spuštěna manuální kontrola Identity Guard.`);
+            const statusArea = document.getElementById('identity-status-area');
+            statusArea.innerHTML = `<p style="color: var(--color-warning-yellow);">Kontrola probíhá, čekejte...</p>`;
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerText = 'Spustit Kontrolu Narušení';
+                
+                // Simulace nálezu narušení po aktivaci (Idea 2) - menší šance po manuální kontrole
+                if (!currentUser.hasBreach && Math.random() < 0.4) { 
                     currentUser.hasBreach = true;
                     currentUser.threatsFound++;
                     saveCurrentUserState();
                     const breachMessage = `🚨 **NÁLEZ ÚNIKU DAT!** Váš Primární e-mail byl nalezen v databázi Dark Webu.`;
-                    logActivity(breachMessage, 'var(--color-danger-red)');
-                    addNotification(breachMessage);
+                    logActivity(breachMessage, 'var(--color-danger-red)', true);
                     alert(breachMessage + ' Přejděte do Identity Guard pro řešení.');
-                    document.getElementById('identity-status-area').innerHTML += generateBreachWarning();
-                    setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-                }, 4000);
-            }
-            levelUp(1);
+                    statusArea.innerHTML = generateBreachWarning();
+                } else {
+                     statusArea.innerHTML = `<p style="color: var(--color-accent-green); margin-top: 15px;">Žádná nová narušení nenalezena. Vaše data jsou v bezpečí.</p>`;
+                     logActivity(`Kontrola Identity Guard dokončena. Žádná nová narušení.`, 'var(--color-accent-green)');
+                }
+                setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
+            }, 5000);
         };
         
         const generateBreachWarning = () => {
@@ -1256,37 +1378,32 @@
         
         const handleSecureIdentity = () => {
              currentUser.hasBreach = false;
-             currentUser.threatsFound = Math.max(0, currentUser.threatsFound - 1); // Opravit 1 hrozbu
+             currentUser.threatsFound = Math.max(0, currentUser.threatsFound - 1); 
              saveCurrentUserState();
-             logActivity(`Identita **Primární e-mail** byla úspěšně zabezpečena.`);
+             logActivity(`Identita **Primární e-mail** byla úspěšně zabezpečena.`, 'var(--color-accent-green)', true);
              document.getElementById('identity-status-area').innerHTML = `<p style="color: var(--color-accent-green); margin-top: 15px;">Únik dat vyřešen! Data jsou opět chráněna.</p>`;
+             document.getElementById('identity-content').innerHTML = generateIdentityGuardHtml(); // Překreslení
              setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-             levelUp(2);
         };
 
 
-        // --- CHYTRÝ SKEN (Vylepšený - Idea 1, 12, 23, 27) ---
+        // --- CHYTRÝ SKEN (Opravený) ---
         
         const generateSimulatedThreats = () => {
-             // 0-3 náhodné hrozby pro simulaci, plus hrozby na základě stavu (např. starý patch)
              let threats = [];
              
-             // Přidat fiktivní hrozby na základě threatsFound
              for(let i = 0; i < currentUser.threatsFound; i++) {
-                 // Vybrat náhodnou hrozbu ze seznamu, ale ne tu, co už je v logu
                  const randomThreat = SIMULATION_DATA.SIMULATED_THREATS[i % SIMULATION_DATA.SIMULATED_THREATS.length];
                  if (!threats.some(t => t.name === randomThreat.name)) {
                       threats.push({ ...randomThreat, ignored: false, type: 'CRITICAL'});
                  }
              }
 
-             // Náhodný Falešný Poplach (Idea 12)
              if (Math.random() < 0.2) {
                  threats.push({ name: "SystemCore_54B.dll", type: "PUP (Potenciálně Nežádoucí)", location: "System32", ignored: false });
              }
              
-             // Starý Patch Hrozba (Idea 13)
-             if (SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30))) {
+             if (SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30))) { 
                  threats.push({ name: "Zastaralý Kernel Patch", type: "Vulnerability", location: "OS Core", ignored: false });
              }
 
@@ -1317,21 +1434,23 @@
              
              return `
                  <div id="scan-threat-report" class="config-group" style="border: 2px solid var(--color-danger-red);">
-                     <h3><i class="fas fa-bug"></i> Detailní Report Hrozeb (Idea 23)</h3>
+                     <h3><i class="fas fa-bug"></i> Detailní Report Hrozeb</h3>
                      ${headerHtml}
                      ${rowsHtml}
+                     <button class="secondary-btn" style="margin-top: 15px;" onclick="logActivity('Simulace exportu zprávy do PDF...', 'var(--color-accent-blue)', true);">Simulovat Export Reportu (PDF)</button>
                  </div>
              `;
         };
         
         const handleScanThreatAction = (index, action) => {
+             if (simulatedThreats[index].ignored) return; // Neměnit ignorované
+             
              if (action === 'delete') {
                   const threatName = simulatedThreats[index].name;
                   
                   if (threatName.includes('SystemCore_54B.dll')) {
-                       // Simulace chyby při smazání systémového souboru (Idea 12)
-                       logActivity(`CHYBA SYSTÉMU: Pokus o smazání ${threatName} způsobil narušení systému. Vyžadována oprava.`, 'var(--color-danger-red)');
-                       currentUser.threatsFound += 2; // Přidat nové hrozby
+                       logActivity(`CHYBA SYSTÉMU: Pokus o smazání ${threatName} způsobil narušení systému. Vyžadována oprava.`, 'var(--color-danger-red)', true);
+                       currentUser.threatsFound = Math.max(currentUser.threatsFound + 2, 5); // Zajištění kritického stavu
                        alert('Kritická chyba: Smazání systémového souboru narušilo stabilní provoz. Okamžitě spusťte Opravu!');
                        simulatedThreats.splice(index, 1);
                   } else {
@@ -1341,15 +1460,10 @@
                   }
                   
                   saveCurrentUserState();
-                  // Přenačíst sken a dashboard
                   document.getElementById('scan-content').innerHTML = generateScanHtml();
                   setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
                   
-             } else if (action === 'ignore') {
-                  simulatedThreats[index].ignored = true;
-                  logActivity(`Hrozba ${simulatedThreats[index].name} ignorována (přidána na bílou listinu).`);
-                  document.getElementById('scan-content').innerHTML = generateScanHtml();
-             }
+             } 
         };
 
         const startScanSimulation = (isRepair = false) => {
@@ -1360,7 +1474,6 @@
              if (isRepair) logActivity(`Spuštěna simulace **OPRAVY** systému.`);
              else logActivity(`Spuštěn Chytrý Sken.`);
              
-             // Tlačítka
              document.getElementById('start-scan-secondary').disabled = true;
              if (document.getElementById('repair-all-btn')) document.getElementById('repair-all-btn').disabled = true;
              
@@ -1376,30 +1489,46 @@
                      simulatedThreats = [];
                      currentUser.threatsFound = 0;
                      scanStatus.innerText = _('repair_done');
-                     logActivity(_('repair_done'), 'var(--color-accent-green)');
-                     levelUp(3); // Za opravu
+                     logActivity(_('repair_done'), 'var(--color-accent-green)', true);
                  } else {
                      simulatedThreats = generateSimulatedThreats();
                      currentUser.threatsFound = simulatedThreats.length;
                      scanStatus.innerText = _('scan_done').replace('%s', currentUser.threatsFound);
                      if (currentUser.threatsFound > 0) addNotification(`Nalezeno ${currentUser.threatsFound} kritických hrozeb!`);
-                     levelUp(2); // Za sken
                  }
                  
-                 // Povolit tlačítka a aktualizovat
                  document.getElementById('start-scan-secondary').disabled = false;
                  if (document.getElementById('repair-all-btn')) document.getElementById('repair-all-btn').disabled = false;
                  
                  saveCurrentUserState();
-                 document.getElementById('scan-content').innerHTML = generateScanHtml(); // Překreslení pro zobrazení tabulky
+                 document.getElementById('scan-content').innerHTML = generateScanHtml();
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
                  
              }, 3000);
         };
         
+        const handleScanToggleChange = (e, item) => {
+             logActivity(`Změněno nastavení skenování: ${item.name} je nyní ${e.target.checked ? 'Aktivní' : 'Neaktivní'}.`);
+        };
+        
+        const handleScheduleChange = (select) => {
+             currentUser.scan_schedule = select.value;
+             logActivity(`Plán automatického skenu nastaven na: ${select.value}.`, 'var(--color-accent-blue)');
+             saveCurrentUserState();
+        };
+
         const generateScanHtml = () => {
              const isPro = currentUser.isPaid;
              const threatsCount = currentUser.threatsFound;
+             
+             const scanAreasHtml = SIMULATION_DATA.SCAN_AREAS.map((item, index) => {
+                 const control = `<label class="toggle-switch"><input type="checkbox" id="scan-area-${index}" ${item.default ? 'checked' : ''} onchange="handleScanToggleChange(event, '${item.name}')"><span class="slider round"></span></label>`;
+                 return `<div class="config-item"><div class="item-info"><strong>${item.name}</strong></div>${control}</div>`;
+             }).join('');
+             
+             const scheduleOptions = SIMULATION_DATA.SCAN_SCHEDULES.map(schedule => 
+                `<option value="${schedule}" ${currentUser.scan_schedule === schedule ? 'selected' : ''}>${schedule}</option>`
+             ).join('');
              
              const scanStatus = isPro ? `
                  <div id="scan-visuals">
@@ -1414,16 +1543,20 @@
                          : ''}
                      <button id="start-scan-secondary" class="primary-btn" style="background-color: var(--color-accent-blue);">${_('scan_run')}</button>
                  </div>
-                 ${generateScanThreatsTable()} <h3 style="margin-top: 20px;"><i class="fas fa-calendar-alt"></i> Plánování a Výjimky (Idea 27)</h3>
+                 ${generateScanThreatsTable()} 
+                 
+                 <h3 style="margin-top: 20px;"><i class="fas fa-calendar-alt"></i> Plánování Skenu (Nyní funkční)</h3>
                  <div class="config-group">
-                      <p>Automatický Sken: **Týdně (Neděle 2:00)**</p>
-                      <p>Výjimky (Bílá listina): <strong>Žádné</strong></p>
-                      <button class="secondary-btn">Upravit plán / Přidat výjimku</button>
+                      <p>Aktuálně nastaveno: <strong>${currentUser.scan_schedule}</strong></p>
+                      <select onchange="handleScheduleChange(this)">
+                          ${scheduleOptions}
+                      </select>
+                      <button class="secondary-btn" style="margin-top: 10px;" onclick="logActivity('Simulace přidání souboru do výjimek.')">Přidat/Odebrat Výjimku</button>
                  </div>
 
-                 <h3 style="margin-top: 20px;">Vybrat typy skenování</h3>
+                 <h3 style="margin-top: 20px;">Typy Skenování (Nyní funkční)</h3>
                  <div class="config-group">
-                     ${generateConfigHtml(SIMULATION_DATA.SCAN_AREAS, 'scan')}
+                     ${scanAreasHtml}
                  </div>
              ` : `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>`;
              
@@ -1450,10 +1583,10 @@
              }).join('');
         };
         
-        // MODUL OPTIMALIZACE (Idea 16)
+        // MODUL OPTIMALIZACE 
         const generateOptimizationHtml = () => {
-             const freedSpace = Math.floor(Math.random() * 800) + 200; // 200-1000MB
-             const processes = Math.floor(Math.random() * 10) + 5; // 5-15 procesů
+             const freedSpace = Math.floor(Math.random() * 800) + 200; 
+             const processes = Math.floor(Math.random() * 10) + 5; 
              
              return `
                 <div class="dashboard-card">
@@ -1462,6 +1595,11 @@
                     <p>Procesy na pozadí zpomalující systém: **${processes}**</p>
                     <p style="color: var(--color-warning-yellow); margin-top: 10px;">Doporučeno spuštění pro optimalizaci výkonu.</p>
                     <button class="primary-btn" id="start-optimize-btn" onclick="handleOptimization(this, ${freedSpace}, ${processes})"><i class="fas fa-angle-double-up"></i> Optimalizovat Zařízení</button>
+                </div>
+                <h3 style="margin-top: 20px;">Detaily Systémových Procesů</h3>
+                <div class="config-group">
+                     <p>Simulované **RAM** uvolnění: **30%**</p>
+                     <p>Optimalizovaný **Start-up** čas: **1.2s**</p>
                 </div>
              `;
         };
@@ -1474,12 +1612,13 @@
              setTimeout(() => {
                  btn.innerText = `Dokončeno! Uvolněno ${space} MB a zrychleno ${proc} procesů.`;
                  btn.style.backgroundColor = 'var(--color-accent-green)';
-                 logActivity(`Optimalizace dokončena. Uvolněno ${space} MB.`, 'var(--color-accent-green)');
-                 levelUp(1);
+                 logActivity(`Optimalizace dokončena. Uvolněno ${space} MB.`, 'var(--color-accent-green)', true);
+                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
+                 
              }, 3000);
         };
         
-        // MODUL WEB SHIELD (Idea 22)
+        // MODUL WEB SHIELD 
         const generateWebShieldHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1488,6 +1627,17 @@
                     <input type="text" id="url-input" placeholder="Zadejte celou URL adresu (např. https://banka.cz)">
                     <button class="primary-btn" id="check-url-btn" onclick="handleUrlCheck()"><i class="fas fa-search"></i> Zkontrolovat URL</button>
                     <div id="url-result" style="margin-top: 15px;"></div>
+                </div>
+                <h3 style="margin-top: 20px;">Nastavení Štítu</h3>
+                <div class="config-group">
+                     <div class="config-item">
+                         <div class="item-info"><strong>Blokování Malwarových Stránek</strong></div>
+                         <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
+                     </div>
+                     <div class="config-item">
+                         <div class="item-info"><strong>Kontrola HTTPS certifikátů</strong></div>
+                         <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
+                     </div>
                 </div>
              `;
         };
@@ -1510,19 +1660,17 @@
                  
                  if (risk) {
                      resultDiv.innerHTML = `<p style="color: var(--color-danger-red); font-weight: bold;"><i class="fas fa-times-circle"></i> DETEKCE: Kritické riziko Phishingu! Adresa byla zablokována.</p>`;
-                     logActivity(`Kritická detekce Phishingu na URL: ${url}.`, 'var(--color-danger-red)');
-                     addNotification(`Kritická detekce Phishingu na URL: ${url}.`);
+                     logActivity(`Kritická detekce Phishingu na URL: ${url}.`, 'var(--color-danger-red)', true);
                      currentUser.threatsFound = Math.max(1, currentUser.threatsFound + 1);
                  } else {
                      resultDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;"><i class="fas fa-check-circle"></i> BEZPEČNÉ: URL je důvěryhodná.</p>`;
-                     logActivity(`URL ${url} označena jako bezpečná.`, 'var(--color-accent-green)');
+                     logActivity(`URL ${url} označena jako bezpečná.`);
                  }
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-                 levelUp(1);
              }, 2000);
         };
 
-        // MODUL TREZOR (Idea 24)
+        // MODUL TREZOR 
         const generateVaultHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1537,12 +1685,14 @@
                     </div>
                     
                     <input type="password" id="vault-master-password" placeholder="Zadejte Master Heslo pro odemčení">
-                    <button class="primary-btn"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
+                    <button class="primary-btn" onclick="logActivity('Pokus o odemčení trezoru.')"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
+                    
+                    <button class="secondary-btn" onclick="logActivity('Simulace přidání nové položky do Trezoru.')" style="margin-top: 10px;">Přidat Novou Položku</button>
                 </div>
              `;
         };
         
-        // MODUL ZÁLOHOVÁNÍ (Idea 18)
+        // MODUL ZÁLOHOVÁNÍ 
         const generateBackupHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1553,7 +1703,7 @@
                     
                     <h4 style="margin-top: 20px;">Historie Záloh</h4>
                     <div class="config-group" style="padding: 10px;">
-                        <div class="item-row"><span>20. 11. 2025 (1.8 GB)</span><button style="background: none; border: none; color: var(--color-accent-blue); cursor: pointer;">Obnovit</button></div>
+                        <div class="item-row"><span>20. 11. 2025 (1.8 GB)</span><button style="background: none; border: none; color: var(--color-accent-blue); cursor: pointer;" onclick="logActivity('Spuštěna simulace obnovy dat.')">Obnovit</button></div>
                         <div class="item-row"><span>05. 11. 2025 (1.7 GB)</span><button style="background: none; border: none; color: var(--color-accent-blue); cursor: pointer;">Obnovit</button></div>
                     </div>
                 </div>
@@ -1568,16 +1718,16 @@
              setTimeout(() => {
                  btn.innerText = "Dokončeno! (100% kompletní)";
                  btn.style.backgroundColor = 'var(--color-accent-green)';
-                 logActivity(`Zálohování dokončeno.`, 'var(--color-accent-green)');
-                 levelUp(1);
+                 logActivity(`Zálohování dokončeno.`, 'var(--color-accent-green)', true);
              }, 4000);
         };
 
-        // MODUL OCHRANA SOUKROMÍ (Idea 26)
+        // MODUL OCHRANA SOUKROMÍ 
         const generatePrivacyHtml = () => {
             const appHtml = SIMULATION_DATA.APP_PERMISSIONS.map((app, index) => {
                  const currentPermission = app.permissions.join(', ');
                  const isHighRisk = app.type === 'Malware';
+                 const isRestricted = app.restricted;
                  
                  const status = isHighRisk ? 
                     `<span style="color: var(--color-danger-red); font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> VYSOKÉ RIZIKO</span>` : 
@@ -1590,7 +1740,10 @@
                             ${status}
                         </div>
                         <span style="font-size: 0.8em; color: var(--text-muted);">Oprávnění: ${currentPermission}</span>
-                        <button class="secondary-btn" style="width: auto; margin-top: 5px;" onclick="handlePermissionToggle(this, '${app.name}')">${_('app_perm_toggle')}</button>
+                        <button class="secondary-btn" style="width: auto; margin-top: 5px; background-color: ${isRestricted ? 'var(--color-accent-green)' : 'var(--input-border)'};" 
+                            onclick="handlePermissionToggle(this, '${app.name}', ${index})">
+                            ${isRestricted ? _('app_perm_toggle_on') : _('app_perm_toggle')}
+                        </button>
                     </div>
                  `;
              }).join('');
@@ -1601,32 +1754,39 @@
                     <p style="color: var(--text-muted);">${_('app_perm_info')}</p>
                 </div>
                 
-                <h3 style="margin-top: 20px;">Detaily Oprávnění (Idea 11)</h3>
+                <h3 style="margin-top: 20px;">Detaily Oprávnění (Nyní funkční)</h3>
                 <div class="config-group">
                     ${appHtml}
+                </div>
+                <h3 style="margin-top: 20px;">Wi-Fi Security Scan (PRO)</h3>
+                <div class="config-group">
+                     <p>Status: **Síť je chráněna (WPA3)**</p>
+                     <button class="secondary-btn">Spustit síťový test</button>
                 </div>
              `;
         };
         
-        const handlePermissionToggle = (btn, appName) => {
-             if (btn.innerText.includes(_('app_perm_toggle'))) {
+        const handlePermissionToggle = (btn, appName, index) => {
+             const newRestrictedState = !SIMULATION_DATA.APP_PERMISSIONS[index].restricted;
+             SIMULATION_DATA.APP_PERMISSIONS[index].restricted = newRestrictedState;
+             
+             if (newRestrictedState) {
                  btn.innerText = _('app_perm_toggle_on');
                  btn.style.backgroundColor = 'var(--color-accent-green)';
-                 logActivity(`Omezen přístup pro aplikaci: ${appName}.`);
+                 logActivity(`Omezen přístup pro aplikaci: ${appName}.`, 'var(--color-accent-green)');
              } else {
                  btn.innerText = _('app_perm_toggle');
                  btn.style.backgroundColor = 'var(--input-border)';
                  logActivity(`Obnoven přístup pro aplikaci: ${appName}.`);
              }
-             levelUp(1);
         };
         
         // --- PROFIL A HISTORIE (Vylepšené) ---
         
         const handleLanguageSwitch = (select) => {
              currentLang = select.value;
-             logActivity(`Jazyk přepnut na: ${select.options[select.selectedIndex].text}.`);
-             unlockFeaturesUI(currentUser.isPaid ? 'PRO' : 'Freemium', null, 'settings'); // Překreslí celou UI
+             logActivity(`Jazyk přepnut na: ${select.options[select.selectedIndex].text}.`, 'var(--color-accent-blue)');
+             unlockFeaturesUI(currentUser.isPaid ? 'PRO' : 'Freemium', null, 'settings'); 
         };
 
         const handleThemeSwitch = () => {
@@ -1663,20 +1823,21 @@
             return `
                 <h3 style="margin-top: 0;"><i class="fas fa-user"></i> Správa Profilu</h3>
                 <div class="config-group">
-                    <p>Uživatelské jméno: <strong>${currentUser.username}</strong> (Úroveň **${currentUser.userLevel}**)</p>
+                    <p>Uživatelské jméno: <strong>${currentUser.username}</strong></p>
                     ${expirationInfo}
+                    ${currentUser.isPaid ? `<p>Licenční klíč: <strong style="color: var(--color-warning-yellow);">${currentUser.license_key || 'N/A'}</strong></p>` : ''}
                     <p>Heslo: <span style="color: var(--color-warning-yellow);">** Skryto pro bezpečnost **</span></p>
-                    <button class="secondary-btn" style="margin-top: 10px;" onclick="alert('Simulace změny hesla: Změna proběhla úspěšně a byla zalogována.')"><i class="fas fa-lock"></i> Změnit Heslo (Idea 4)</button>
+                    <button class="secondary-btn" style="margin-top: 10px;" onclick="logActivity('Změna hesla simulována.')"><i class="fas fa-lock"></i> Změnit Heslo</button>
                 </div>
                 
-                <h3 style="margin-top: 20px;"><i class="fas fa-info-circle"></i> Technické Informace (Idea 13)</h3>
+                <h3 style="margin-top: 20px;"><i class="fas fa-info-circle"></i> Technické Informace</h3>
                 <div class="config-group">
                     <p>Kernel Verze: <strong>${SIMULATION_DATA.SYSTEM_INFO.KERNEL_VERSION}</strong></p>
                     <p>Poslední Patch: <strong style="color: ${SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE < new Date(new Date().setDate(new Date().getDate() - 30)) ? 'var(--color-danger-red)' : 'var(--color-accent-green)'};">${SIMULATION_DATA.SYSTEM_INFO.PATCH_DATE.toLocaleDateString('cs-CZ')}</strong></p>
                     <p>Kód Karantény: <strong>${SIMULATION_DATA.SYSTEM_INFO.QUARANTINE_CODE}</strong></p>
                 </div>
                 
-                <h3 style="margin-top: 20px;"><i class="fas fa-palette"></i> Vzhled a Jazyk (Idea 25, 30)</h3>
+                <h3 style="margin-top: 20px;"><i class="fas fa-palette"></i> Vzhled a Jazyk</h3>
                 <div class="config-group">
                      <p>Aktuální Téma: <strong>${currentUser.currentTheme === 'dark' ? 'Tmavé' : 'Světlé'}</strong></p>
                      <p>Přepnout Jazyk:</p>
@@ -1690,7 +1851,7 @@
                 <div class="config-group">
                     ${logHtml}
                 </div>
-                <button class="secondary-btn" onclick="clearActivityLog()"><i class="fas fa-eraser"></i> Vyčistit log aktivity (Idea 4)</button>
+                <button class="secondary-btn" onclick="clearActivityLog()"><i class="fas fa-eraser"></i> Vyčistit log aktivity</button>
             `;
         };
 
@@ -1702,20 +1863,6 @@
             }
         };
         
-        // --- LOGIKA LEVELOVÁNÍ (Idea 28) ---
-        const levelUp = (points) => {
-             const newLevel = currentUser.userLevel + points;
-             const oldLevel = currentUser.userLevel;
-             currentUser.userLevel = newLevel;
-             
-             if (newLevel > oldLevel && newLevel % 5 === 0) {
-                 logActivity(`GRATULUJEME! Dosáhli jste Úrovně **${newLevel}**!`, 'var(--color-warning-yellow)');
-                 addNotification(`GRATULUJEME! Dosáhli jste Úrovně ${newLevel}!`);
-             }
-             saveCurrentUserState();
-        };
-
-
         // --- HLAVNÍ FUNKCE PRO AKTIVACI ---
         
         const makeFunctional = (isPro) => {
@@ -1729,13 +1876,19 @@
                 'vault': { proHtml: generateVaultHtml(), freemiumHtml: `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>` },
                 'backup': { proHtml: generateBackupHtml(), freemiumHtml: `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>` },
                 'privacy': { proHtml: generatePrivacyHtml(), freemiumHtml: `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>` },
-                'settings': { proHtml: generateSettingsHtml(), freemiumHtml: generateSettingsHtml() } // Nastavení je částečně dostupné vždy
+                'payment_shield': { proHtml: document.getElementById('payment-shield-content').innerHTML, freemiumHtml: `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>` },
+                'settings': { proHtml: generateSettingsHtml(), freemiumHtml: generateSettingsHtml() } 
             };
 
             for (const moduleId in modulesConfig) {
                 const moduleContentDiv = document.getElementById(`${moduleId}-content`);
                 if (moduleContentDiv) {
-                    moduleContentDiv.innerHTML = isPro ? modulesConfig[moduleId].proHtml : modulesConfig[moduleId].freemiumHtml;
+                    // Speciální ošetření pro modul payment_shield (obsah je definován přímo v HTML, zde pouze obalíme pro freemium)
+                    if (moduleId === 'payment_shield' && !isPro) {
+                         moduleContentDiv.innerHTML = modulesConfig[moduleId].freemiumHtml;
+                    } else if (moduleId !== 'payment_shield') {
+                         moduleContentDiv.innerHTML = isPro ? modulesConfig[moduleId].proHtml : modulesConfig[moduleId].freemiumHtml;
+                    }
                 }
             }
 
@@ -1748,7 +1901,7 @@
                 if (scanBtnSecondary) scanBtnSecondary.addEventListener('click', () => startScanSimulation(false));
                 
                 const identityProtectionBtn = document.getElementById('start-identity-protection-btn');
-                if (identityProtectionBtn) identityProtectionBtn.addEventListener('click', handleIdentityProtection);
+                if (identityProtectionBtn) identityProtectionBtn.addEventListener('click', () => handleIdentityProtection(identityProtectionBtn));
             }
         };
 
@@ -1769,15 +1922,21 @@
             document.querySelectorAll('.nav-item').forEach(nav => {
                 const navModule = nav.getAttribute('data-module');
                 
-                if (navModule === 'dashboard') { nav.classList.remove('locked'); nav.querySelector('i').className = 'fas fa-home'; return; }
+                // Dashboard a Settings jsou dostupné vždy
+                if (navModule === 'dashboard' || navModule === 'settings') { 
+                    nav.classList.remove('locked'); 
+                    const icons = { 'dashboard': 'fas fa-home', 'settings': 'fas fa-cogs' };
+                    nav.querySelector('i').className = icons[navModule];
+                    return; 
+                }
                 
-                if (isPro || navModule === 'settings') { // Settings je vždy dostupné
+                if (isPro) { 
                     nav.classList.remove('locked');
                     const icons = { 
                         'scan': 'fas fa-rocket', 'vpn': 'fas fa-globe', 
-                        'identity': 'fas fa-user-shield', 'settings': 'fas fa-cogs', 
-                        'optimization': 'fas fa-tachometer-alt', 'web_shield': 'fas fa-shield-alt',
-                        'vault': 'fas fa-lock'
+                        'identity': 'fas fa-user-shield', 'optimization': 'fas fa-tachometer-alt', 
+                        'web_shield': 'fas fa-shield-alt', 'vault': 'fas fa-lock',
+                        'payment_shield': 'fas fa-money-check-alt'
                     };
                     nav.querySelector('i').className = icons[navModule] || 'fas fa-check';
                 } else {
@@ -1811,7 +1970,7 @@
                 nav.addEventListener('click', (e) => {
                     e.preventDefault();
                     const moduleId = e.currentTarget.getAttribute('data-module');
-                    if (e.currentTarget.classList.contains('locked') && (!currentUser || !currentUser.isPaid)) { 
+                    if (e.currentTarget.classList.contains('locked') && (!currentUser || !currentUser.isPaid) && moduleId !== 'settings') { 
                         alert(`${_('lock_title')} ${_('lock_msg')}`);
                     } else {
                         switchModule(moduleId);
@@ -1831,20 +1990,7 @@
         });
         
         // --- DĚDICTVÍ PŮVODNÍCH FUNKCÍ (Nesmí být odstraněny) ---
-        const generateIdentityGuardHtml = () => { // Původní V8.7 + Breach
-             const isPro = currentUser.isPaid;
-             const isPaidContent = `<p style="margin-bottom: 20px;">Vyberte, které osobní údaje chcete monitorovat v Dark Webu.</p>
-                     ${generateBreachWarning()}
-                     <div class="config-group" id="identity-checkbox-list">
-                        ${generateConfigHtml(SIMULATION_DATA.IDENTITY_ITEMS, 'identity')}
-                     </div>
-                     <button id="start-identity-protection-btn" class="primary-btn" style="margin-top: 15px;"><i class="fas fa-search-dollar"></i> Spustit Identity Ochrana</button>
-                     <div id="identity-status-area"></div>
-                     `;
-            return isPro ? isPaidContent : `<p style="color: var(--color-danger-red);">${_('lock_title')} ${_('lock_msg')}</p><button class="secondary-btn" onclick="switchModule('paysafe')">${_('buy_pro')}</button>`;
-        };
-        // Původní V8.7 - ZÁKLAD
-        const generateVpnServerHtml = () => { /* Funkce pro V8.7, nyní obsažena v generateVpnHtml */ return ''; };
+        const generateVpnServerHtml = () => { /* Původní V8.7 - Funkce pro V8.7, nyní obsažena v generateVpnHtml */ return ''; };
     </script>
 </body>
 </html>
