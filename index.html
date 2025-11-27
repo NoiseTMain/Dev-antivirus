@@ -2,9 +2,9 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V4.0 (Paysafecard Simulation)</title>
+    <title>Nexus Prime Security - V4.2 (Final Simulation)</title>
     <style>
-        /* CSS z V3.0 zůstává stejný, pouze přidáme specifické styly pro platební box */
+        /* --- CSS STYLING --- */
         :root {
             --color-dark-bg: #1e1e2c; 
             --color-darker-bg: #151520; 
@@ -54,6 +54,7 @@
             font-size: 2em;
             font-weight: 700;
         }
+        
         .nav-item {
             display: block;
             padding: 15px 30px;
@@ -63,12 +64,22 @@
             font-size: 1.1em;
             border-left: 5px solid transparent;
             margin-bottom: 5px;
+            cursor: pointer;
         }
-        .nav-item:hover { background-color: #2a2a3b; }
-        .nav-item.active {
+        .nav-item:hover:not(.locked) { background-color: #2a2a3b; }
+        .nav-item.active:not(.locked) {
             background-color: #2a2a3b;
             color: var(--color-accent-blue);
             border-left: 5px solid var(--color-accent-blue);
+        }
+        .nav-item.locked {
+            opacity: 0.6;
+            color: var(--color-danger-red);
+            border-left: 5px solid var(--color-danger-red);
+            cursor: not-allowed;
+        }
+        .nav-item.locked:hover {
+             background-color: #1a1a25;
         }
         
         #license-status {
@@ -88,7 +99,6 @@
         }
         .module { animation: fadeIn 0.5s; }
         .module.hidden { display: none; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         h2 { color: var(--color-text-light); border-bottom: 1px solid var(--color-border); padding-bottom: 15px; margin-bottom: 30px; font-weight: 500;}
 
@@ -100,64 +110,59 @@
             font-weight: bold;
             transition: background-color 0.2s, transform 0.1s;
         }
-        .primary-btn {
-            background-color: var(--color-accent-blue);
-            color: white;
-            font-size: 1.2em;
-            margin-top: 20px;
-        }
-        .primary-btn:hover:not(:disabled) { background-color: #0056b3; transform: translateY(-1px);}
-        .primary-btn:disabled { background-color: #0056b355; cursor: default; }
-
-        .secondary-btn {
-            background-color: var(--color-border);
-            color: var(--color-text-light);
-            margin-left: 10px;
-        }
-        .secondary-btn:hover:not(:disabled) { background-color: #404055; }
-        
-        input[type="text"] {
-            padding: 10px;
-            border: 1px solid var(--color-border);
-            background-color: #2a2a3b;
-            color: white;
-            border-radius: 6px;
-            width: 300px;
-            margin-right: 10px;
+        .primary-btn:disabled, .secondary-btn:disabled { 
+            background-color: #0056b355; 
+            cursor: not-allowed; 
         }
         
-        /* Dashboard Karty */
-        #security-score-card {
-            background: linear-gradient(135deg, #2a2a3b, #1e1e2c); 
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border: 1px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        /* Styl pro přepínač (Toggle Switch) */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
         }
-        #score-gauge {
-            width: 150px;
-            height: 150px;
+        .toggle-switch input {opacity: 0; width: 0; height: 0;}
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
             border-radius: 50%;
-            border: 10px solid var(--color-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5em;
-            font-weight: 700;
-            transition: border-color 0.5s;
         }
-        .status-danger { border-color: var(--color-danger-red); color: var(--color-danger-red);}
-        .status-optimal { border-color: var(--color-accent-green); color: var(--color-accent-green);}
-        
-        /* Nové styly pro Paysafecard platbu */
+        input:checked + .slider { background-color: var(--color-accent-green); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Styl pro řádek funkce */
+        .feature-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        /* PSC Styly z V4.1 */
         #paysafe-payment-box {
             background-color: #2a2a3b;
             padding: 25px;
             border-radius: 10px;
-            border: 1px solid #1c73e8; /* Modrý akcent pro platbu */
+            border: 1px solid #1c73e8; 
             margin-top: 30px;
         }
         #paysafe-status-bar {
@@ -170,14 +175,19 @@
         }
         .text-remaining { color: var(--color-danger-red); }
         .text-paid { color: var(--color-accent-green); }
+        .paysafe-input-area input {
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            background-color: #2a2a3b;
+            color: white;
+            border-radius: 6px;
+            width: 250px;
+            margin-right: 15px;
+        }
         .paysafe-input-area {
             display: flex;
             align-items: center;
             margin-top: 15px;
-        }
-        .paysafe-input-area input {
-            width: 250px;
-            margin-right: 15px;
         }
         #transaction-log {
             margin-top: 25px;
@@ -188,6 +198,7 @@
             border-top: 1px solid var(--color-border);
             padding-top: 10px;
         }
+        /* Konec PSC stylů */
 
     </style>
 </head>
@@ -198,10 +209,11 @@
             <h1 class="logo">NEXUS PRIME</h1>
             <nav>
                 <a href="#" class="nav-item active" data-module="dashboard">🏠 Dashboard</a>
-                <a href="#" class="nav-item" data-module="scan">🚀 Chytrý Sken</a>
+                <a href="#" class="nav-item locked" data-module="scan" id="scan-nav">🔒 Chytrý Sken</a>
+                <a href="#" class="nav-item locked" data-module="cyber_defense" id="cyber-nav">🔒 Kybernetická Obrana</a>
                 <a href="#" class="nav-item locked" data-module="vpn" id="vpn-nav">🔒 VPN Prime</a>
-                <a href="#" class="nav-item locked" data-module="identity" id="identity-nav">🕵️ Identity Guard</a>
-                <a href="#" class="nav-item" data-module="settings">⚙️ Nastavení</a>
+                <a href="#" class="nav-item locked" data-module="identity" id="identity-nav">🔒 Identity Guard</a>
+                <a href="#" class="nav-item locked" data-module="settings" id="settings-nav">🔒 Nastavení</a>
             </nav>
             <div id="license-status">
                 Stav licence: <span id="license-text" class="status-inactive">Neaktivní</span>
@@ -222,7 +234,7 @@
                         <p id="system-status-text" style="color: var(--color-danger-red); font-size: 1.1em; font-weight: bold;">Vyžaduje okamžitou akci!</p>
                         <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: Nikdy</p>
                     </div>
-                    <button id="start-smart-scan-dashboard" class="primary-btn">Opravit Nyní</button>
+                    <button id="start-smart-scan-dashboard" class="primary-btn" disabled>Opravit Nyní (PRO)</button>
                 </div>
                 
                 <h3 style="margin-top: 40px; font-weight: 500;">Upgrade na Nexus PRO (Platba Paysafecard)</h3>
@@ -235,49 +247,140 @@
                     </div>
 
                     <div class="paysafe-input-area">
-                        <input type="text" id="paysafe-pin-input" placeholder="Zadejte 16místný PIN Paysafecard">
+                        <input type="text" id="paysafe-pin-input" placeholder="Zadejte 16místný PIN Paysafecard" maxlength="16">
                         <button id="submit-pin-btn" class="secondary-btn" style="padding: 10px 20px;">Ověřit PIN</button>
                     </div>
 
                     <div id="transaction-log">
                         <p>Log transakcí:</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="cyber_defense" class="module hidden">
+                <h2>🛡️ Kybernetická Obrana (Elite Funkce)</h2>
+                <div id="cyber-features-list">
+                    <div class="feature-row">
+                        <div>
+                            <h4>Šifrování Souborů (File Shredder)</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Zajišťuje bezpečné a neobnovitelné mazání citlivých dat.</p>
                         </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked disabled id="toggle-encryption">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="feature-row">
+                        <div>
+                            <h4>Ochrana před Ransomwarem</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Monitoruje a blokuje neoprávněné šifrování vašich dokumentů.</p>
+                        </div>
+                        <span id="ransomware-status" style="color: var(--color-accent-green);">Aktivní, monitoruje 5 složek</span>
+                    </div>
+
+                    <div class="feature-row">
+                        <div>
+                            <h4>Zabezpečení DNS (NetGuard)</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Filtruje škodlivé domény na síťové úrovni.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked disabled id="toggle-dns">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="feature-row">
+                        <div>
+                            <h4>Anti-Keylogger Modul</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Chrání před neoprávněným zaznamenáváním stisků kláves.</p>
+                        </div>
+                        <span style="color: var(--color-accent-green);">Aktivní, chráněno</span>
+                    </div>
+
+                    <div class="feature-row">
+                        <div>
+                            <h4>Smart Firewall (Hacker Defense)</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Pokročilá kontrola odchozí a příchozí síťové komunikace.</p>
+                        </div>
+                         <label class="toggle-switch">
+                            <input type="checkbox" checked disabled id="toggle-firewall">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                     <div class="feature-row">
+                        <div>
+                            <h4>Anti-Rootkit Engine</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Hluboká kontrola jádra systému proti skrytým hrozbám.</p>
+                        </div>
+                        <span style="color: var(--color-text-grey);">Poslední sken jádra: Před 2 dny</span>
+                    </div>
+                    
+                    <div class="feature-row">
+                        <div>
+                            <h4>Ochrana Webové Kamery</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Upozornění při každém pokusu o přístup k webkameře.</p>
+                        </div>
+                         <label class="toggle-switch">
+                            <input type="checkbox" checked disabled id="toggle-webcam">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="feature-row">
+                        <div>
+                            <h4>Kontrola Wi-Fi Sítě</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Aktivní monitorování sítě proti MITM útokům.</p>
+                        </div>
+                        <span style="color: var(--color-accent-green);">Síť Zabezpečená (WPA3)</span>
+                    </div>
+                    
+                     <div class="feature-row">
+                        <div>
+                            <h4>Zablokování Reklam (Ad-Blocker)</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Blokuje sledování a obtěžující reklamy na webu.</p>
+                        </div>
+                         <label class="toggle-switch">
+                            <input type="checkbox" checked disabled id="toggle-adblock">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="feature-row">
+                        <div>
+                            <h4>Ochrana Plateb Online</h4>
+                            <p style="color: var(--color-text-grey); font-size: 0.9em;">Zabezpečuje okna prohlížeče při transakcích.</p>
+                        </div>
+                        <span style="color: var(--color-accent-green);">Aktivní monitorování prohlížeče</span>
+                    </div>
 
                 </div>
             </div>
             
-            <div id="scan" class="module hidden">...</div>
+            <div id="scan" class="module hidden">
+                <h2>🚀 Chytrý Sken & Optimalizace (PRO)</h2>
+                <div id="scan-content" class="premium-feature locked">
+                     <p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení proveďte upgrade na Dashboardu.</p>
+                </div>
+            </div>
             <div id="vpn" class="module hidden">
                 <h2>🔒 VPN Prime - Virtuální Privátní Síť</h2>
-                <div id="vpn-content">
-                    <div class="premium-feature locked" id="vpn-locked-content">
-                        <div>
-                            <h3>Stav: Odpojeno</h3>
-                            <p style="color: var(--color-text-grey);">IP Adresa: N/A</p>
-                        </div>
-                        <button class="primary-btn" id="vpn-toggle" disabled>Připojit</button>
-                    </div>
+                <div id="vpn-content" class="premium-feature locked">
+                     <p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení proveďte upgrade na Dashboardu.</p>
                 </div>
             </div>
             <div id="identity" class="module hidden">
                  <h2>🕵️ Identity Guard - Ochrana Údajů</h2>
-                <div id="identity-content">
-                    <div class="premium-feature locked" id="identity-locked-content">
-                        <div>
-                            <h3>Monitoring Dark Webu</h3>
-                            <p style="color: var(--color-text-grey);">Zadejte e-mail k monitoringu úniků hesel:</p>
-                            <input type="text" id="email-input" placeholder="vas@email.cz" style="width: 250px; margin-right: 10px;">
-                        </div>
-                        <button class="primary-btn" id="monitor-btn" disabled>Monitorovat</button>
-                    </div>
-                    <div id="monitoring-result" style="margin-top: 20px; padding: 15px; border-radius: 8px;" class="hidden"></div>
+                <div id="identity-content" class="premium-feature locked">
+                     <p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení proveďte upgrade na Dashboardu.</p>
                 </div>
             </div>
-
             <div id="settings" class="module hidden">
-                <h2>⚙️ Nastavení</h2>
-                <p>Zde by byla nastavení pro upozornění, výjimky a jazyk aplikace.</p>
-                <p style="margin-top: 20px; color: var(--color-text-grey);">Verze aplikace: Nexus Prime Elite V4.0.0</p>
+                <h2>⚙️ Nastavení (PRO)</h2>
+                <div class="premium-feature locked">
+                     <p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení proveďte upgrade na Dashboardu.</p>
+                </div>
             </div>
 
         </main>
@@ -286,30 +389,31 @@
     <script>
         /* --- JAVASCRIPT LOGIKA --- */
         let isLicensed = false;
-        let threatsFound = 0;
-        let lastRepairTime = null;
-        
-        // --- LOGIKA PLATEBNÍ SIMULACE ---
         const PRO_PRICE = 7999;
         let remainingAmount = PRO_PRICE;
-        let pinCounter = 0; // Pro unikátní falešné piny
         
-        // Pevné částky, které budeme simulovat u PINů
-        const SIMULATED_PIN_VALUES = [3610, 1000, 500, 3610, 2000, 5000, 1200]; 
+        // PŘESNÁ LOGIKA PINŮ: 3610 + 3610 + 779 = 7999
+        const SIMULATED_PIN_VALUES = [3610, 3610, 779]; 
+        let pinIndex = 0; 
+        let lastRepairTime = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const navItems = document.querySelectorAll('.nav-item');
             const modules = document.querySelectorAll('.module');
             
-            // Platební prvky
+            // Základní prvky
             const remainingAmountSpan = document.getElementById('remaining-amount');
             const paysafePinInput = document.getElementById('paysafe-pin-input');
             const submitPinBtn = document.getElementById('submit-pin-btn');
             const transactionLog = document.getElementById('transaction-log');
-            const vpnToggleBtn = document.getElementById('vpn-toggle');
-            const monitorBtn = document.getElementById('monitor-btn');
+            const dashboardScanBtn = document.getElementById('start-smart-scan-dashboard');
+            
+            // Nové funkce (pro aktivaci)
+            const toggleSwitches = document.querySelectorAll('.toggle-switch input');
+            const cyberNav = document.getElementById('cyber-nav');
 
-            // --- 1. FUNKCE NAVIGACE A AKTIVACE ---
+
+            // --- FUNKCE NAVIGACE ---
             const switchModule = (moduleId) => {
                 navItems.forEach(i => {
                     i.classList.remove('active');
@@ -326,39 +430,134 @@
                     e.preventDefault();
                     const targetModuleId = item.getAttribute('data-module');
                     
-                    if (item.classList.contains('locked') && !isLicensed) {
-                        alert('Tato prémiová funkce vyžaduje aktivní licenci Nexus PRO. Dokončete platbu Paysafecard.');
+                    if (item.classList.contains('locked') && !isLicensed && targetModuleId !== 'dashboard') {
+                        alert('Tato funkce je uzamčena v neaktivované verzi. Dokončete platbu na Dashboardu!');
                         switchModule('dashboard'); 
                         return;
                     }
                     
-                    switchModule(targetModuleId);
+                    if (targetModuleId === 'dashboard' || isLicensed) {
+                        switchModule(targetModuleId);
+                    }
                 });
             });
 
+            // --- FUNKCE PRO ZPROVOZNĚNÍ FUNKCIONALITY ---
+            const makeFunctional = () => {
+                // Povolení přepínačů v novém Cyber modulu
+                toggleSwitches.forEach(toggle => {
+                    toggle.disabled = false;
+                    // Přidání interakce
+                    toggle.addEventListener('change', (e) => {
+                        const state = e.target.checked ? 'zapnuto' : 'vypnuto';
+                        console.log(`Funkce ${e.target.id} je nyní ${state}`);
+                    });
+                });
+                
+                // Odemčení simulace VPN
+                const vpnContent = document.getElementById('vpn-content');
+                vpnContent.classList.remove('locked');
+                vpnContent.innerHTML = `
+                    <div class="premium-feature">
+                        <div>
+                            <h3>Stav: Odpojeno</h3>
+                            <p style="color: var(--color-text-grey);">Klikněte pro zabezpečení spojení.</p>
+                        </div>
+                        <button class="primary-btn" id="vpn-toggle">Připojit</button>
+                    </div>
+                `;
+                 // Re-attach VPN listener
+                document.getElementById('vpn-toggle').addEventListener('click', () => {
+                     simulateVpnConnection(document.getElementById('vpn-toggle'));
+                });
+                
+                // Odemčení simulace Identity Guard
+                const identityContent = document.getElementById('identity-content');
+                identityContent.classList.remove('locked');
+                identityContent.innerHTML = `
+                    <div class="premium-feature">
+                        <div>
+                            <h3>Monitoring Dark Webu</h3>
+                            <p style="color: var(--color-text-grey);">Zadejte e-mail k monitoringu úniků hesel:</p>
+                            <input type="text" id="email-input" placeholder="vas@email.cz" style="width: 250px; margin-right: 10px;">
+                        </div>
+                        <button class="primary-btn" id="monitor-btn">Monitorovat</button>
+                    </div>
+                    <div id="monitoring-result" style="margin-top: 20px; padding: 15px; border-radius: 8px;" class="hidden"></div>
+                `;
+                // Re-attach ID Guard listener
+                document.getElementById('monitor-btn').addEventListener('click', () => {
+                    simulateIdentityScan(document.getElementById('email-input'), document.getElementById('monitor-btn'), document.getElementById('monitoring-result'));
+                });
+                
+                // Odemčení simulace Skenování
+                const scanContent = document.getElementById('scan-content');
+                scanContent.classList.remove('locked');
+                scanContent.innerHTML = `
+                     <div id="scan-visuals">
+                        <p>Aktuální stav: <span id="scan-status">Připraveno ke spuštění.</span></p>
+                        <div id="scan-progress-bar">
+                            <div id="scan-fill"></div>
+                        </div>
+                    </div>
+
+                    <div id="scan-results" style="margin-top: 50px; background-color: #2a2a3b; padding: 20px; border-radius: 8px;">
+                        <h3>Sumář výsledků</h3>
+                        <p>Nalezené hrozby (<span style="color: var(--color-danger-red);">Vážné</span>): <span id="threats-count" style="font-weight: bold;">0</span></p>
+                        <p>Potenciálně nežádoucí programy (PUP): <span id="pup-count" style="font-weight: bold;">0</span></p>
+                        <p>Optimalizační položky (registry, cache): <span id="optim-count" style="font-weight: bold;">0</span></p>
+                        
+                        <button id="repair-btn" class="primary-btn hidden">Spustit Opravu</button>
+                        <button id="start-scan-secondary" class="secondary-btn">Spustit Sken</button>
+                    </div>
+                `;
+                // Re-attach Scan listener
+                document.getElementById('start-scan-secondary').addEventListener('click', () => {
+                    startScanSimulation(false);
+                });
+                
+                // Odemčení Nastavení
+                document.getElementById('settings').querySelector('.premium-feature').innerHTML = `
+                    <p>Zde by byla nastavení pro upozornění, výjimky a jazyk aplikace.</p>
+                    <p style="margin-top: 20px; color: var(--color-text-grey);">Verze aplikace: Nexus Prime Elite V4.2.0</p>
+                `;
+            };
+
+
             const unlockFeatures = () => {
                 isLicensed = true;
+                
+                // 1. Změna stavu licence
                 document.getElementById('license-text').innerText = 'Aktivní (Nexus PRO)';
                 document.getElementById('license-text').classList.remove('status-inactive');
                 document.getElementById('license-text').classList.add('status-active');
                 
-                // Odemčení navigačních položek a tlačítek
-                document.getElementById('vpn-nav').classList.remove('locked');
-                document.getElementById('identity-nav').classList.remove('locked');
-                vpnToggleBtn.disabled = false;
-                monitorBtn.disabled = false;
+                // 2. Odemčení navigačních položek
+                [document.getElementById('scan-nav'), cyberNav, document.getElementById('vpn-nav'), document.getElementById('identity-nav'), document.getElementById('settings-nav')].forEach(nav => {
+                    nav.classList.remove('locked');
+                    nav.innerHTML = nav.innerHTML.replace('🔒', '✅'); // Změna ikony
+                });
                 
-                // Změna dashboardu po platbě
+                // 3. Odemčení tlačítek na Dashboardu
+                dashboardScanBtn.disabled = false;
+                dashboardScanBtn.innerText = 'Spustit Sken';
+                dashboardScanBtn.addEventListener('click', () => switchModule('scan'));
+
+                // 4. Změna dashboardu po platbě
                 const paysafeBox = document.getElementById('paysafe-payment-box');
                 paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);">Gratulujeme!</h3>
-                    <p>Licence **Nexus PRO** byla úspěšně aktivována. Všechny prémiové funkce jsou nyní odemčeny.</p>
+                    <p>Licence **Nexus PRO** byla úspěšně aktivována. Všechny prémiové funkce jsou nyní odemčeny a připraveny k použití.</p>
+                    <button class="primary-btn" onclick="document.getElementById('scan-nav').click();">Spustit První Sken</button>
                 `;
                 
+                // 5. Zprovoznění interaktivních prvků
+                makeFunctional();
+
                 alert('Děkujeme za zakoupení PRO verze! Všechny prémiové funkce byly odemčeny.');
             };
 
-            // --- 2. LOGIKA PLATEBNÍ SIMULACE ---
+            // --- LOGIKA PLATEBNÍ SIMULACE ---
             const updateRemainingDisplay = () => {
                 remainingAmountSpan.innerText = remainingAmount.toLocaleString('cs-CZ') + ' Kč';
                 if (remainingAmount <= 0) {
@@ -366,15 +565,14 @@
                     remainingAmountSpan.classList.add('text-paid');
                     submitPinBtn.disabled = true;
                     paysafePinInput.disabled = true;
-                    // Automatická aktivace po dokončení platby
-                    setTimeout(unlockFeatures, 1000); 
+                    setTimeout(unlockFeatures, 1500); 
                 }
             };
             
             const addLog = (message, color) => {
                 const p = document.createElement('p');
                 p.innerHTML = `<span style="color: ${color};">• ${message}</span>`;
-                transactionLog.insertBefore(p, transactionLog.children[1]); // Přidá na začátek
+                transactionLog.insertBefore(p, transactionLog.children[1]); 
                 transactionLog.scrollTop = 0;
             };
 
@@ -386,16 +584,19 @@
                     return;
                 }
                 
+                if (pinIndex >= SIMULATED_PIN_VALUES.length) {
+                     addLog("Platba dokončena! Čekám na systémovou aktivaci...", "var(--color-accent-green)");
+                     return;
+                }
+
                 submitPinBtn.disabled = true;
                 paysafePinInput.disabled = true;
                 addLog(`Ověřování PINu ${pin}...`, "var(--color-warning-yellow)");
                 
                 setTimeout(() => {
                     
-                    // FALEŠNÁ LOGIKA URČENÍ HODNOTY PINU
-                    // Použijeme sekvenční hodnoty, aby simulace seděla s příklady
-                    let pinValue = SIMULATED_PIN_VALUES[pinCounter % SIMULATED_PIN_VALUES.length]; 
-                    pinCounter++;
+                    let pinValue = SIMULATED_PIN_VALUES[pinIndex]; 
+                    pinIndex++;
                     
                     const amountPaid = Math.min(pinValue, remainingAmount);
                     const refund = pinValue - amountPaid;
@@ -403,7 +604,7 @@
                     if (remainingAmount > 0) {
                         remainingAmount -= amountPaid;
                         
-                        addLog(`PIN ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
+                        addLog(`PIN #${pinIndex} ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
                         if (refund > 0) {
                              addLog(`Přeplatek (${refund.toLocaleString('cs-CZ')} Kč) zůstává na PINu.`, "var(--color-warning-yellow)");
                         }
@@ -418,37 +619,157 @@
                         paysafePinInput.placeholder = "Zadejte další PIN Paysafecard";
                     }
 
-                }, 2500); // Simulace ověření 2.5 sekundy
+                }, 2500); 
             });
-            
-            // --- INICIALIZACE A DALŠÍ FUNKCE (Z V3.0) ---
-            
-            // Placeholder pro ostatní funkce (Skenování, VPN, Identity), které používají logiku z V3.0
-            
-            // Implementace základních statusů (potřeba pro Dashboard)
-            const scoreGauge = document.getElementById('score-gauge');
-            const systemStatusText = document.getElementById('system-status-text');
-            const lastRepairText = document.getElementById('last-repair-text');
 
-            const updateDashboardStatus = (score, statusClass, statusText, repairTime) => {
-                scoreGauge.innerText = score + '%';
-                scoreGauge.className = 'status-' + statusClass;
-                systemStatusText.innerText = statusText;
-                systemStatusText.style.color = statusClass === 'optimal' ? 'var(--color-accent-green)' : 'var(--color-danger-red)';
-                lastRepairText.innerText = 'Poslední oprava: ' + (repairTime ? formatTimeAgo(repairTime) : 'Nikdy');
+            // --- SIMULAČNÍ FUNKCE (ZAPNOUT AŽ PO LICENCI) ---
+
+            // VPN SIMULACE
+            let isVpnConnected = false;
+            const simulateVpnConnection = (vpnToggleBtn) => {
+                if (!isVpnConnected) {
+                    vpnToggleBtn.disabled = true;
+                    vpnToggleBtn.innerText = 'Připojování...';
+                    vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
+                    
+                    setTimeout(() => {
+                        isVpnConnected = true;
+                        vpnToggleBtn.disabled = false;
+                        vpnToggleBtn.innerText = 'Odpojit';
+                        vpnToggleBtn.style.backgroundColor = 'var(--color-danger-red)';
+                        document.querySelector('#vpn-content h3').innerText = 'Stav: Připojeno (Praha)';
+                        document.querySelector('#vpn-content p').innerText = 'IP Adresa: 192.168.1.1 (Maskováno)';
+                    }, 3500);
+                } else {
+                    isVpnConnected = false;
+                    vpnToggleBtn.innerText = 'Připojit';
+                    vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
+                    document.querySelector('#vpn-content h3').innerText = 'Stav: Odpojeno';
+                    document.querySelector('#vpn-content p').innerText = 'Klikněte pro zabezpečení spojení.';
+                }
             };
-            
-            const formatTimeAgo = (date) => {
-                const seconds = Math.floor((new Date() - date) / 1000);
-                if (seconds < 60) return `před několika sekundami`;
-                const minutes = Math.floor(seconds / 60);
-                if (minutes < 60) return `před ${minutes} minutami`;
-                const hours = Math.floor(minutes / 60);
-                return `před ${hours} hodinami`;
-            }
-            
-            // Inicializace Dashboardu
-            updateDashboardStatus(65, 'danger', 'Vyžaduje okamžitou akci!', lastRepairTime);
+
+            // IDENTITY GUARD SIMULACE
+            const simulateIdentityScan = (emailInput, monitorBtn, monitoringResult) => {
+                const email = emailInput.value.trim();
+                if (!email.includes('@')) {
+                    alert('Zadejte prosím platný e-mail.');
+                    return;
+                }
+
+                monitorBtn.disabled = true;
+                monitorBtn.innerText = 'Skenování Dark Webu...';
+                monitoringResult.classList.add('hidden');
+
+                setTimeout(() => {
+                    monitorBtn.disabled = false;
+                    monitorBtn.innerText = 'Znovu Monitorovat';
+
+                    const leakFound = Math.random() < 0.5; // 50% šance na únik
+
+                    if (leakFound) {
+                        monitoringResult.innerHTML = `<h4 style="color: var(--color-danger-red);">Únik Dat Nalezen!</h4><p>E-mail: <strong>${email}</strong> byl nalezen v <strong>1 kompromitované databázi</strong>.</p>`;
+                        monitoringResult.style.border = '2px solid var(--color-danger-red)';
+                        
+                    } else {
+                         monitoringResult.innerHTML = `<h4 style="color: var(--color-accent-green);">Vynikající Zabezpečení</h4><p>E-mail: <strong>${email}</strong> nebyl nalezen v žádném novém úniku.</p>`;
+                        monitoringResult.style.border = '2px solid var(--color-accent-green)';
+                    }
+                    
+                    monitoringResult.classList.remove('hidden');
+                }, 4000);
+            };
+
+            // SCAN SIMULACE (Z V3.0)
+            let threatsFound = 0;
+            const startScanSimulation = (isRepair = false) => {
+                const scanStatus = document.getElementById('scan-status');
+                const scanFill = document.getElementById('scan-fill');
+                const repairBtn = document.getElementById('repair-btn');
+                const threatsCount = document.getElementById('threats-count');
+                const pupCount = document.getElementById('pup-count');
+                const optimCount = document.getElementById('optim-count');
+
+                // Uzamčení tlačítek
+                document.getElementById('start-scan-secondary').disabled = true;
+                if(repairBtn) repairBtn.disabled = true;
+
+                scanFill.style.width = '0%';
+                scanFill.style.backgroundColor = 'var(--color-accent-blue)';
+                if(repairBtn) repairBtn.classList.add('hidden');
+
+                if (!isRepair) {
+                    threatsFound = 0; 
+                    threatsCount.innerText = '0';
+                    pupCount.innerText = '0';
+                    optimCount.innerText = '0';
+                }
+
+                const phases = [
+                    { time: 3000, text: 'Inicializace jádra a kontrola paměti...', progress: 15 },
+                    { time: 6000, text: 'Hloubková kontrola souborů a registrů...', progress: 45 },
+                    { time: 5000, text: 'Heuristická analýza podezřelého chování...', progress: 75 },
+                    { time: 4000, text: 'Konečná kontrola a optimalizace...', progress: 95 },
+                ];
+                
+                let phaseIndex = 0;
+
+                const runPhase = () => {
+                    if (phaseIndex >= phases.length) {
+                        scanStatus.innerText = 'Skenování dokončeno. Zobrazuji výsledky...';
+                        scanFill.style.width = '100%';
+
+                        if (isRepair) {
+                            scanFill.style.backgroundColor = 'var(--color-accent-green)';
+                            threatsCount.innerText = '0';
+                            pupCount.innerText = '0';
+                            optimCount.innerText = '0';
+                            
+                            // Aktualizace časového razítka na Dashboardu
+                            document.getElementById('last-repair-text').innerText = 'Poslední oprava: Před několika sekundami';
+                            
+                        } else {
+                            threatsFound = Math.random() < 0.5 ? 1 : 0; // 50% šance na vážnou hrozbu
+                            const pupFound = Math.random() < 0.6 ? Math.floor(Math.random() * 3) + 1 : 0;
+                            const optimFound = Math.floor(Math.random() * 20) + 5; 
+
+                            threatsCount.innerText = threatsFound;
+                            pupCount.innerText = pupFound;
+                            optimCount.innerText = optimFound;
+                            
+                            if (threatsFound > 0 || pupFound > 0) {
+                                scanFill.style.backgroundColor = 'var(--color-danger-red)';
+                                if(repairBtn) repairBtn.classList.remove('hidden');
+                                if(repairBtn) repairBtn.addEventListener('click', () => {
+                                    scanStatus.innerText = 'Spouštím Odstranění a Optimalizaci...';
+                                    scanFill.style.backgroundColor = 'var(--color-accent-green)';
+                                    repairBtn.classList.add('hidden');
+                                    setTimeout(() => startScanSimulation(true), 1500); 
+                                });
+                            } else {
+                                scanFill.style.backgroundColor = 'var(--color-accent-green)';
+                            }
+                        }
+
+                        document.getElementById('start-scan-secondary').disabled = false;
+                        if(repairBtn) repairBtn.disabled = false;
+                        return;
+                    }
+
+                    const phase = phases[phaseIndex];
+                    scanStatus.innerHTML = `<strong>${phase.text}</strong>`;
+                    scanFill.style.width = phase.progress + '%';
+                    
+                    setTimeout(() => {
+                        phaseIndex++;
+                        runPhase();
+                    }, phase.time);
+                };
+                
+                runPhase();
+            };
+
+            // --- INICIALIZACE ---
             updateRemainingDisplay();
         });
     </script>
