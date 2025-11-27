@@ -2,11 +2,11 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V9.8 (Dynamická Simulace)</title>
+    <title>Nexus Prime Security - V9.7 (Realistická Simulace)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- CSS STYLING V9.8 --- */
+        /* --- CSS STYLING V9.7 --- */
         :root {
             /* Původní Dark Mode */
             --color-dark-bg: #1e1e2c; 
@@ -48,7 +48,7 @@
         .light-mode {
             --app-bg: var(--color-lighter-bg);
             --module-bg: var(--color-light-bg);
-            --content-bg: var(--lighter-bg); /* Použito lighter-bg pro kontrast */
+            --content-bg: var(--color-lighter-bg);
             --text-color: var(--color-light-text-dark);
             --text-muted: var(--color-light-text-grey);
             --input-bg: var(--color-lighter-bg); /* Input pozadí - Bílé */
@@ -543,7 +543,7 @@
     </div>
 
     <script>
-        /* --- JAVASCRIPT LOGIKA V9.8 --- */
+        /* --- JAVASCRIPT LOGIKA V9.7 --- */
         const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
         const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
         const ACTIVITY_LOG_KEY = 'nexusPrimeActivityLog';
@@ -653,27 +653,9 @@
         let simulatedThreats = [];
         let selectedPlan = 'one_year'; // Defaultní plán pro platbu
         
-        // --- ČASY SIMULACE (Dynamická 5-10 minut) ---
-        
-        /**
-         * Generuje náhodnou dobu trvání v milisekundách mezi min a max (v sekundách).
-         * @param {number} minSeconds - Minimální doba v sekundách (např. 5 pro 5 minut).
-         * @param {number} maxSeconds - Maximální doba v sekundách (např. 10 pro 10 minut).
-         * @returns {number} Náhodná doba v milisekundách.
-         */
-        const getRandomDuration = (minSeconds, maxSeconds) => {
-             const minMs = minSeconds * 1000;
-             const maxMs = maxSeconds * 1000;
-             // Vrací náhodnou hodnotu mezi minMs a maxMs
-             return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-        };
-
-        // Rozsahy pro simulace (sekundy v kódu = minuty v UI)
-        const DURATION_LONG_MIN = 5; // 5 minut
-        const DURATION_LONG_MAX = 10; // 10 minut (pro Sken, Identity, Zálohu)
-        const DURATION_SHORT_MIN = 3; // 3 minuty
-        const DURATION_SHORT_MAX = 7; // 7 minut (pro Optimalizaci, VPN, Web Shield)
-
+        // --- ČASY SIMULACE (5-10 minut) ---
+        const SIMULATION_DURATION_LONG = 10000; // 10 sekund (pro sken, identitu, zálohu)
+        const SIMULATION_DURATION_SHORT = 5000; // 5 sekund (pro optimalizaci, VPN, web shield)
         
         // --- FUNKCE PRO VÝPOČET A TRVALOST DAT ---
         const calculateExpirationDate = (planKey) => {
@@ -697,7 +679,7 @@
         };
         
         const getRegisteredUsers = () => { return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY)) || {}; };
-        const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERed_USERS_KEY, JSON.stringify(users)); };
+        const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
         const saveCurrentUserState = () => { if (currentUser) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser)); };
         
         // Kontrola Expirace a downgrade
@@ -1263,7 +1245,7 @@
         };
 
 
-        // --- VPN (Simulace Krátká 3-7 minut) ---
+        // --- VPN (Simulace 5 minut) ---
         const generateVpnHtml = () => {
              const options = SIMULATION_DATA.VPN_SERVERS.map(server => 
                  `<option value="${server.replace(/\s/g, '-')}" ${server.includes('Automaticky') ? 'selected' : ''}>${server}</option>`
@@ -1343,9 +1325,7 @@
             
             logActivity(`Pokus o připojení k VPN serveru: ${selectedServer} (${selectedProtocol}).`);
             
-            // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
-            const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
-            
+            // --- SIMULACE 5 MINUT ---
             setTimeout(() => {
                 isVpnConnected = true;
                 vpnToggleBtn.disabled = false;
@@ -1367,11 +1347,11 @@
                 if(vpnInterval) clearInterval(vpnInterval);
                 vpnInterval = setInterval(() => {}, 5000); // Fiktivní interval pro aktivitu
 
-            }, duration);
+            }, SIMULATION_DURATION_SHORT);
         };
 
 
-        // --- IDENTITY GUARD (Simulace Dlouhá 5-10 minut) ---
+        // --- IDENTITY GUARD (Simulace 10 minut) ---
         
         const generateIdentityGuardHtml = () => {
              const isPro = currentUser.isPaid;
@@ -1407,20 +1387,16 @@
             logActivity(`Spuštěna manuální kontrola Identity Guard.`);
             const statusArea = document.getElementById('identity-status-area');
             
-            // --- SIMULACE PRŮBĚHU (Dynamická Dlouhá Doba) ---
-            const duration = getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
-            
-            const messages = SIMULATION_DATA.SCAN_LOADING_MESSAGES.map((msg, index) => {
-                if(index === 0) return "Inicializace Dark Web API a šifrovaného tunelu...";
-                if(index === 1) return "Vyhledávání primárního e-mailu v kompromitovaných databázích...";
-                if(index === 2) return "Křížová kontrola uložených platebních údajů (tokenizace)...";
-                if(index === 3) return "Analýza fiktivních datových sad A-92 / B-85...";
-                if(index === 4) return "Zpracování 95% ověřených zdrojů... (Dokončování)";
-                return msg;
-            }).slice(0, 5); // Zkrácení na 5 klíčových fází
-            
+            // --- SIMULACE PRŮBĚHU ---
+            const messages = [
+                "Inicializace Dark Web API a šifrovaného tunelu...",
+                "Vyhledávání primárního e-mailu v kompromitovaných databázích...",
+                "Křížová kontrola uložených platebních údajů (tokenizace)...",
+                "Analýza fiktivních datových sad A-92 / B-85...",
+                "Zpracování 95% ověřených zdrojů... (Dokončování)"
+            ];
             let msgIndex = 0;
-            const messageInterval = duration / messages.length; 
+            const messageInterval = SIMULATION_DURATION_LONG / messages.length; // Postupná změna textu
             
             const updateStatus = () => {
                  if (msgIndex < messages.length) {
@@ -1431,7 +1407,7 @@
             updateStatus();
             const intervalId = setInterval(updateStatus, messageInterval);
             
-            // --- Konec SIMULACE ---
+            // --- SIMULACE 10 MINUT ---
             setTimeout(() => {
                 clearInterval(intervalId);
                 btn.disabled = false;
@@ -1450,7 +1426,7 @@
                      logActivity(`Kontrola Identity Guard dokončena. Žádná nová narušení.`, 'var(--color-accent-green)');
                 }
                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-            }, duration);
+            }, SIMULATION_DURATION_LONG);
         };
         
         const generateBreachWarning = () => {
@@ -1476,7 +1452,7 @@
         };
 
 
-        // --- CHYTRÝ SKEN (Simulace Dlouhá 5-10 minut) ---
+        // --- CHYTRÝ SKEN (Simulace 10 minut bez odpočtu) ---
         
         const generateSimulatedThreats = () => {
              let threats = [];
@@ -1569,9 +1545,7 @@
              if (isRepair) logActivity(`Spuštěna simulace **OPRAVY** systému.`);
              else logActivity(`Spuštěn Chytrý Sken.`);
              
-             // --- DYNAMICKÁ DOBA SKENOVÁNÍ (5-10 minut) ---
-             const duration = isRepair ? getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX) : getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
-             
+             const duration = isRepair ? SIMULATION_DURATION_SHORT : SIMULATION_DURATION_LONG;
              const messages = SIMULATION_DATA.SCAN_LOADING_MESSAGES;
              let msgIndex = 0;
              const messageInterval = duration / messages.length; 
@@ -1580,7 +1554,7 @@
              scanVisuals.innerHTML = `
                  <p style="font-weight: bold;">Stav: <span id="scan-running-status" style="color: var(--color-warning-yellow);">Inicializace...</span></p>
                  <div class="loading-bar"><div class="loading-fill scan-fill"></div></div>
-                 <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">Probíhá hloubková analýza jádra (Simulace trvá cca ${Math.round(duration / 60000)} minut)</p>
+                 <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">Probíhá hloubková analýza jádra (Simulace bez viditelného odpočtu)</p>
              `;
              const runningStatus = document.getElementById('scan-running-status');
 
@@ -1682,7 +1656,7 @@
 
         // --- MODULY DLE IDEÍ ---
         
-        // MODUL OPTIMALIZACE (Simulace Krátká 3-7 minut)
+        // MODUL OPTIMALIZACE (Simulace 5 minut)
         const generateOptimizationHtml = () => {
              const freedSpace = Math.floor(Math.random() * 800) + 200; 
              const processes = Math.floor(Math.random() * 10) + 5; 
@@ -1715,9 +1689,7 @@
                  <div class="loading-bar"><div class="loading-fill"></div></div>
              `;
              
-             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
-             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
-             
+             // --- SIMULACE 5 MINUT ---
              setTimeout(() => {
                  statusDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;">Dokončeno! Uvolněno ${space} MB a zrychleno ${proc} procesů.</p>`;
                  
@@ -1730,10 +1702,10 @@
                  logActivity(`Optimalizace dokončena. Uvolněno ${space} MB.`, 'var(--color-accent-green)', true);
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
                  
-             }, duration);
+             }, SIMULATION_DURATION_SHORT);
         };
         
-        // MODUL WEB SHIELD (Simulace Krátká 3-7 minut)
+        // MODUL WEB SHIELD (Simulace 5 minut)
         const generateWebShieldHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1775,18 +1747,16 @@
                  <div class="loading-bar"><div class="loading-fill"></div></div>
              `;
              
-             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
-             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
-             
+             // --- SIMULACE 5 MINUT ---
              setTimeout(() => {
                  
                  statusDiv.innerHTML = `<button class="primary-btn" id="start-web-scan" onclick="handleWebScan(this)" style="background-color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Všechny vrstvy Štítu aktivní</button>`;
                  logActivity(`Web Shield kontrola dokončena. Vše v pořádku.`, 'var(--color-accent-green)', true);
-             }, duration);
+             }, SIMULATION_DURATION_SHORT);
         };
 
 
-        // MODUL TREZOR (Simulace Krátká 3-7 minut)
+        // MODUL TREZOR (Simulace 5 minut)
         const generateVaultHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1819,9 +1789,7 @@
                  <div class="loading-bar"><div class="loading-fill"></div></div>
              `;
              
-             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
-             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
-             
+             // --- SIMULACE 5 MINUT ---
              setTimeout(() => {
                  
                  if (Math.random() > 0.3) {
@@ -1833,10 +1801,10 @@
                       statusDiv.innerHTML = `<button class="primary-btn" id="vault-unlock-btn" onclick="handleVaultUnlock(this)"><i class="fas fa-unlock"></i> Odemknout Trezor</button>`;
                       alert('Chyba: Master Heslo je neplatné.');
                  }
-             }, duration);
+             }, SIMULATION_DURATION_SHORT);
         };
         
-        // MODUL ZÁLOHOVÁNÍ (Simulace Dlouhá 5-10 minut)
+        // MODUL ZÁLOHOVÁNÍ (Simulace 10 minut)
         const generateBackupHtml = () => {
              return `
                 <div class="dashboard-card">
@@ -1866,13 +1834,11 @@
                  <div class="loading-bar"><div class="loading-fill scan-fill"></div></div>
              `;
              
-             // --- SIMULACE DYNAMICKÉ DLOUHÉ DOBY (5-10 minut) ---
-             const duration = getRandomDuration(DURATION_LONG_MIN, DURATION_LONG_MAX);
-             
+             // --- SIMULACE 10 MINUT ---
              setTimeout(() => {
                  statusDiv.innerHTML = `<button class="primary-btn" style="background-color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Zálohování Dokončeno!</button>`;
                  logActivity(`Zálohování dokončeno.`, 'var(--color-accent-green)', true);
-             }, duration);
+             }, SIMULATION_DURATION_LONG);
         };
 
         // MODUL OCHRANA SOUKROMÍ 
@@ -1944,9 +1910,7 @@
                  <div class="loading-bar"><div class="loading-fill"></div></div>
              `;
              
-             // --- SIMULACE DYNAMICKÉ KRÁTKÉ DOBY (3-7 minut) ---
-             const duration = getRandomDuration(DURATION_SHORT_MIN, DURATION_SHORT_MAX);
-             
+             // --- SIMULACE 5 MINUT ---
              setTimeout(() => {
                  
                  if (Math.random() > 0.2) {
@@ -1958,7 +1922,7 @@
                       statusDiv.innerHTML = `<p style="font-weight: bold; color: var(--color-accent-green);">Status: Síť je zabezpečená (WPA3)</p><button class="secondary-btn" id="start-wifi-scan-btn" onclick="handleWifiScan(this)">Opakovat test</button>`;
                       alert('Wi-Fi síť je zabezpečená.');
                  }
-             }, duration);
+             }, SIMULATION_DURATION_SHORT);
         };
         
         // --- PROFIL A HISTORIE (Vylepšené) ---
