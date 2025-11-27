@@ -2,11 +2,11 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V9.5 (Profesionální Komplet)</title>
+    <title>Nexus Prime Security - V9.6 (Profesionální Komplet)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- CSS STYLING --- */
+        /* --- CSS STYLING V9.6 --- */
         :root {
             /* Původní Dark Mode */
             --color-dark-bg: #1e1e2c; 
@@ -39,6 +39,9 @@
             --nav-active: var(--color-accent-blue);
             --nav-inactive: var(--color-text-grey);
             --hr-color: var(--color-border);
+            
+             /* FIX: Lepší čitelnost v Light Mode */
+            --button-text-light: #ffffff; 
         }
         
         /* Téma LIGHT MODE */
@@ -48,11 +51,13 @@
             --content-bg: var(--color-lighter-bg);
             --text-color: var(--color-light-text-dark);
             --text-muted: var(--color-light-text-grey);
-            --input-bg: var(--color-lighter-bg);
-            --input-border: var(--color-light-border);
+            --input-bg: var(--color-lighter-bg); /* Input pozadí - Bílé */
+            --input-border: var(--color-light-border); /* Input border - Šedý */
             --nav-active: var(--color-accent-blue);
             --nav-inactive: var(--color-light-text-grey);
             --hr-color: var(--color-light-border);
+            
+            --button-text-light: var(--color-light-text-dark); /* Sekundární tlačítka */
         }
 
 
@@ -66,7 +71,7 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #app-window {
@@ -176,7 +181,7 @@
         }
         .secondary-btn {
             background-color: var(--input-border);
-            color: var(--text-color);
+            color: var(--button-text-light); /* FIX Light Mode */
             margin-top: 15px;
         }
         .primary-btn:disabled, .secondary-btn:disabled {
@@ -263,7 +268,7 @@
             border-bottom: 1px solid var(--hr-color);
         }
         .config-item:last-child { border-bottom: none; }
-        .item-info strong { display: block; }
+        .item-info strong { display: block; color: var(--text-color); } /* FIX Light Mode */
         .item-info span { font-size: 0.8em; color: var(--text-muted); }
         .config-item:hover { background-color: rgba(128, 128, 128, 0.1); border-radius: 5px; padding: 10px; margin: -5px 0;}
 
@@ -328,6 +333,27 @@
              justify-content: space-between;
              padding: 5px 0;
              align-items: center;
+             color: var(--text-color); /* FIX Light Mode */
+        }
+        
+        /* Loading Bar (Simulace bez odpočtu) */
+        .loading-bar {
+            height: 15px;
+            background-color: var(--input-border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .loading-fill {
+             height: 100%;
+             width: 0%; 
+             background-color: var(--color-accent-blue);
+             animation: loading-animation 5s infinite linear; /* Zpomalená animace */
+        }
+        @keyframes loading-animation {
+             0% { width: 10%; }
+             50% { width: 90%; }
+             100% { width: 10%; }
         }
 
     </style>
@@ -513,21 +539,20 @@
     </div>
 
     <script>
-        /* --- JAVASCRIPT LOGIKA V9.5 --- */
+        /* --- JAVASCRIPT LOGIKA V9.6 --- */
         const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
         const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
         const ACTIVITY_LOG_KEY = 'nexusPrimeActivityLog';
         const NOTIFICATIONS_KEY = 'nexusPrimeNotifications';
         
-        // --- CENA A NOVÉ LICENCE (Upraveno dle požadavku) ---
+        // --- CENA A NOVÉ LICENCE (Upraveno dle požadavku: Bez 5% slevy, Bez doživotní) ---
         const SUBSCRIPTION_PLANS = {
-            'half_year': { days: 182, fullPrice: 3999, discountedPrice: 3799, name: "Půl roku (5% Sleva)" },
-            'one_year': { days: 365, fullPrice: 7999, discountedPrice: 7599, name: "Jeden rok (5% Sleva)" },
-            'lifetime': { days: 9999, fullPrice: 19999, discountedPrice: 18999, name: "Doživotně (5% Sleva)" }
+            'half_year': { days: 182, fullPrice: 3999, discountedPrice: 3999, name: "Půl roku (3999 Kč)", pinConfig: [3610, 389] },
+            'one_year': { days: 365, fullPrice: 7999, discountedPrice: 7999, name: "Jeden rok (7999 Kč)", pinConfig: [3610, 3610, 779] }
         };
         const DEFAULT_PRICE = SUBSCRIPTION_PLANS.one_year.discountedPrice;
-        const SIMULATED_PIN_VALUES = [3610, 3610, 779]; 
-
+        
+        // Piny jsou dynamicky čteny z pinConfig
         let currentUser = null;
         
         // --- DATA A JAZYKOVÉ PROMĚNNÉ ---
@@ -539,8 +564,10 @@
                 "status_active": "Aktivní PRO verze", "status_free": "Freemium (Základní ochrana)",
                 "buy_pro": "Koupit PRO licenci", "logout": "Odhlásit se", "scan_run": "Spustit Sken",
                 "scan_repair": "Opravit Vše (1 kliknutí)", "threats_found": "Nalezené hrozby:",
-                "scan_status_ready": "Připraveno ke spuštění.", "scan_status_running": "Skenování probíhá...",
-                "repair_done": "Oprava dokončena! Všechny hrozby byly odstraněny.", "scan_done": "Skenování dokončeno! Nalezeno %s hrozeb.",
+                "scan_status_ready": "Připraveno ke spuštění.", 
+                "scan_status_running": "Skenování probíhá, prosíme, vyčkejte (5 minut simulace)...", // NOVÝ TEXT
+                "repair_done": "Oprava dokončena! Všechny hrozby byly odstraněny.", 
+                "scan_done": "Skenování dokončeno! Nalezeno %s hrozeb.",
                 "app_perm_scan": "Kontrola oprávnění aplikací", "app_perm_info": "Tyto aplikace mají oprávnění k přístupu k citlivým datům. Měli byste je zkontrolovat.",
                 "app_perm_title": "Oprávnění aplikace", "app_perm_toggle": "Omezit přístup",
                 "app_perm_toggle_on": "Povolit", "app_perm_toggle_off": "Omezit",
@@ -552,8 +579,10 @@
                 "status_active": "Active PRO Version", "status_free": "Freemium (Basic Protection)",
                 "buy_pro": "Buy PRO License", "logout": "Log Out", "scan_run": "Run Scan",
                 "scan_repair": "Repair All (1 Click)", "threats_found": "Threats Found:",
-                "scan_status_ready": "Ready to run.", "scan_status_running": "Scanning in progress...",
-                "repair_done": "Repair completed! All threats removed.", "scan_done": "Scanning complete! %s threats found.",
+                "scan_status_ready": "Ready to run.", 
+                "scan_status_running": "Scanning in progress, please wait (5 minute simulation)...",
+                "repair_done": "Repair completed! All threats removed.", 
+                "scan_done": "Scanning complete! %s threats found.",
                 "app_perm_scan": "Application Permissions Check", "app_perm_info": "These apps have access to sensitive data. You should review them.",
                 "app_perm_title": "App Permission", "app_perm_toggle": "Limit Access",
                 "app_perm_toggle_on": "Allow", "app_perm_toggle_off": "Limit",
@@ -612,13 +641,6 @@
                 "Automaticky (Nejrychlejší)", "Česká republika (Praha 1)", "Německo (Frankfurt)", 
                 "USA (New York)", "Japonsko (Tokio)", "Singapur"
             ],
-            // Idea 22 - Simulace Phishingu
-            PHISHING_URLS: {
-                "google.com": false,
-                "banka.cz": false,
-                "phishing.com": true,
-                "securelogin.net": true
-            },
             // NOVÉ: Plánování Skenu
             SCAN_SCHEDULES: ["Vypnuto", "Týdně (Neděle 2:00)", "Denně (23:00)"],
             
@@ -639,12 +661,6 @@
             if (!plan) return null;
             
             const today = new Date();
-            if (planKey === 'lifetime') {
-                // Doživotní licence se nastaví na velmi vzdálené datum
-                today.setFullYear(today.getFullYear() + 20); 
-                return today.toLocaleDateString('cs-CZ');
-            }
-            
             today.setDate(today.getDate() + plan.days);
             return today.toLocaleDateString('cs-CZ');
         };
@@ -676,11 +692,10 @@
                     
                     if (expiry < today) {
                         user.isPaid = false;
-                        user.remainingAmount = SUBSCRIPTION_PLANS.one_year.discountedPrice;
+                        user.remainingAmount = SUBSCRIPTION_PLANS[user.last_plan_key || 'one_year'].fullPrice; // Získat plnou cenu
                         user.license_expiration_date = null;
                         user.license_key = null; // Odstranění klíče
                         logActivity(`VAROVÁNÍ: PRO licence vypršela. Přepnuto na Freemium.`, 'var(--color-danger-red)');
-                        // Nealertovat automaticky, aby se to chovalo nenápadněji
                         return false; 
                     }
                 }
@@ -706,8 +721,9 @@
                      vpnIp: fullUser.vpnIp || SIMULATION_DATA.SYSTEM_INFO.LAST_IP,
                      hasBreach: fullUser.hasBreach || false,
                      threatsFound: fullUser.threatsFound || (fullUser.isPaid ? 0 : 5),
-                     license_key: fullUser.license_key || null, // NOVÉ: Licenční klíč
-                     scan_schedule: fullUser.scan_schedule || 'Vypnuto', // NOVÉ: Plán skenu
+                     license_key: fullUser.license_key || null, 
+                     scan_schedule: fullUser.scan_schedule || 'Vypnuto',
+                     last_plan_key: fullUser.last_plan_key || 'one_year' // Nové: Klíč posledního plánu
                      
                  };
                  
@@ -751,8 +767,7 @@
         };
 
         // --- REALISTICKÝ LOG AKTIVIT ---
-        // UPOZORNĚNÍ: Odstraněno automatické přidávání do Notifikací pro běžné logy
-        const logActivity = (description, color = 'var(--color-text-light)', isNotification = false) => {
+        const logActivity = (description, color = 'var(--text-color)', isNotification = false) => { // FIX barva defaultně na var(--text-color)
             if (!currentUser) return;
             const logEntry = {
                 timestamp: new Date().toLocaleDateString('cs-CZ') + ' ' + new Date().toLocaleTimeString('cs-CZ'),
@@ -829,7 +844,7 @@
         const clearNotifications = () => {
              saveNotifications([]);
              displayNotifications();
-             logActivity("Upozornění vymazána z Centra Notifikací.", 'var(--color-text-light)', true);
+             logActivity("Upozornění vymazána z Centra Notifikací.", 'var(--text-color)', true);
         };
 
         // --- AUTENTIZACE ---
@@ -860,13 +875,14 @@
                  hasBreach: false,
                  threatsFound: 5,
                  license_key: null,
-                 scan_schedule: 'Vypnuto'
+                 scan_schedule: 'Vypnuto',
+                 last_plan_key: 'one_year'
              };
              users[regUsername] = newUser;
              saveRegisteredUsers(users);
              currentUser = newUser;
              saveCurrentUserState();
-             logActivity(`Registrace nového účtu: ${regUsername}.`, 'var(--color-text-light)', true);
+             logActivity(`Registrace nového účtu: ${regUsername}.`, 'var(--text-color)', true);
              unlockFeaturesUI('Freemium', `${_('welcome')} ${regUsername}! Váš účet byl vytvořen.`, 'dashboard');
         };
         
@@ -893,6 +909,7 @@
                   const existingVašek = users['Vašek'];
                   let expirationDate = existingVašek ? existingVašek.license_expiration_date : null;
                   
+                  // Použijeme roční licenci pro testovacího uživatele
                   if (!expirationDate || checkLicenseExpiration({ isPaid: true, license_expiration_date: expirationDate })) {
                        expirationDate = calculateExpirationDate('one_year');
                   }
@@ -904,20 +921,21 @@
                       password: 'vasek11', 
                       isPaid: true, 
                       remainingAmount: 0, 
-                      pinIndex: SIMULATED_PIN_VALUES.length,
+                      pinIndex: SUBSCRIPTION_PLANS.one_year.pinConfig.length, // Plně placeno
                       license_expiration_date: expirationDate,
                       currentTheme: existingVašek ? existingVašek.currentTheme : 'dark',
                       vpnIp: SIMULATION_DATA.SYSTEM_INFO.LAST_IP,
                       hasBreach: false,
                       threatsFound: 0,
                       license_key: licenseKey,
-                      scan_schedule: existingVašek ? existingVašek.scan_schedule : 'Týdně (Neděle 2:00)'
+                      scan_schedule: existingVašek ? existingVašek.scan_schedule : 'Týdně (Neděle 2:00)',
+                      last_plan_key: 'one_year'
                   };
                   
                   users['Vašek'] = currentUser;
                   saveRegisteredUsers(users);
                   saveCurrentUserState();
-                  logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`, 'var(--color-text-light)', true);
+                  logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`, 'var(--text-color)', true);
                   unlockFeaturesUI('PRO', `${_('welcome')} ${currentUser.username}! PRO verze je automaticky aktivována.`, 'dashboard');
                   return;
              }
@@ -933,7 +951,7 @@
                   const licenseType = currentUser.isPaid ? 'PRO' : 'Freemium';
                   const message = (wasPaid && !currentUser.isPaid) ? `Licence vypršela. ${_('welcome')} ${currentUser.username}!` : `${_('welcome')} ${currentUser.username}!`;
                   
-                  logActivity(`Úspěšné přihlášení uživatele ${currentUser.username}.`, 'var(--color-text-light)');
+                  logActivity(`Úspěšné přihlášení uživatele ${currentUser.username}.`, 'var(--text-color)');
                   unlockFeaturesUI(licenseType, message, 'dashboard');
                   return;
              }
@@ -943,7 +961,7 @@
         };
         
         const handleLogout = () => { 
-             logActivity(`Odhlášení uživatele ${currentUser.username}.`, 'var(--color-text-light)', true);
+             logActivity(`Odhlášení uživatele ${currentUser.username}.`, 'var(--text-color)', true);
              currentUser = null;
              isVpnConnected = false;
              if(vpnInterval) clearInterval(vpnInterval);
@@ -955,32 +973,35 @@
              document.getElementById('header-license-status').className = 'status-inactive';
              document.getElementById('app-window').className = 'dark-mode'; 
              document.querySelectorAll('.nav-item').forEach(nav => {
-                 nav.classList.add('locked'); nav.querySelector('i').innerHTML = '🔒'; 
+                 nav.classList.add('locked'); nav.querySelector('i').className = 'fas fa-lock'; // Opravená ikona zámku
              });
              document.getElementById('dashboard').innerHTML = '';
              updateNotificationUI();
              switchModule('auth_select');
         };
 
-        // --- PLATEBNÍ MODUL LOGIKA (Nové plány) ---
+        // --- PLATEBNÍ MODUL LOGIKA (Upraveno dle požadavku) ---
          const updateRemainingDisplay = () => {
              const remainingAmountSpan = document.getElementById('remaining-amount');
              const currentPlanKey = document.getElementById('plan-select').value;
-             const price = SUBSCRIPTION_PLANS[currentPlanKey].discountedPrice;
+             const plan = SUBSCRIPTION_PLANS[currentPlanKey];
+             
+             // Nastavení stavu pro nový plán
+             if (currentUser.last_plan_key !== currentPlanKey) {
+                 currentUser.last_plan_key = currentPlanKey;
+                 currentUser.remainingAmount = plan.fullPrice;
+                 currentUser.pinIndex = 0;
+             }
              
              if (!remainingAmountSpan || !currentUser) return;
              
-             // Nastaví zbývající částku k zaplacení pro vybraný plán
-             currentUser.remainingAmount = price;
              remainingAmountSpan.innerText = currentUser.remainingAmount.toLocaleString('cs-CZ') + ' Kč';
              selectedPlan = currentPlanKey;
              
              const submitPinBtn = document.getElementById('submit-pin-btn');
              const paysafePinInput = document.getElementById('paysafe-pin-input');
-             if (submitPinBtn) submitPinBtn.disabled = false;
-             if (paysafePinInput) paysafePinInput.disabled = false;
              
-             // Pokud byla zaplacena celá částka, aktivovat PRO
+             // Pokud je placení kompletní
              if (currentUser.remainingAmount <= 0) {
                  const expirationDate = calculateExpirationDate(selectedPlan);
                  const licenseKey = generateLicenseKey();
@@ -997,17 +1018,24 @@
                     users[currentUser.username].license_expiration_date = expirationDate; 
                     users[currentUser.username].threatsFound = 0;
                     users[currentUser.username].license_key = licenseKey;
+                    users[currentUser.username].pinIndex = SUBSCRIPTION_PLANS[selectedPlan].pinConfig.length;
                     saveRegisteredUsers(users);
                  }
                  saveCurrentUserState();
-                 logActivity(`Aktivace PRO licence (${SUBSCRIPTION_PLANS[selectedPlan].name}) dokončena. Platnost do ${expirationDate}.`, 'var(--color-accent-green)', true);
+                 logActivity(`Aktivace PRO licence (${plan.name}) dokončena. Platnost do ${expirationDate}.`, 'var(--color-accent-green)', true);
 
                  const paysafeBox = document.getElementById('paysafe-payment-box');
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Platba dokončena!</h3>
-                    <p>Licence **Nexus PRO** na **${SUBSCRIPTION_PLANS[selectedPlan].name}** byla úspěšně aktivována s platností do **${expirationDate}**.</p>
+                    <p>Licence **Nexus PRO** na **${plan.name}** byla úspěšně aktivována s platností do **${expirationDate}**.</p>
                     <button class="primary-btn" onclick="unlockFeaturesUI('PRO', 'Gratulujeme! PRO verze je aktivní.', 'dashboard')">Pokračovat na Dashboard</button>
                  `;
+             } else {
+                 if (submitPinBtn) submitPinBtn.disabled = false;
+                 if (paysafePinInput) {
+                     paysafePinInput.disabled = false;
+                     paysafePinInput.placeholder = `Zadejte ${currentUser.pinIndex + 1}. PIN Paysafecard`;
+                 }
              }
          };
          
@@ -1024,14 +1052,15 @@
              const paysafePinInput = document.getElementById('paysafe-pin-input');
              const submitPinBtn = document.getElementById('submit-pin-btn');
              const pin = paysafePinInput.value.trim();
+             const currentPlan = SUBSCRIPTION_PLANS[currentUser.last_plan_key];
              
              if (pin.length !== 16 || !/^\d+$/.test(pin)) {
                  addLog("Chyba: PIN musí být 16místné číslo.", "var(--color-danger-red)");
                  return;
              }
              
-             if (currentUser.pinIndex >= SIMULATED_PIN_VALUES.length || currentUser.remainingAmount <= 0) {
-                  addLog("Platba již byla dokončena nebo vyčerpán počet testovacích PINů.", "var(--color-accent-green)");
+             if (currentUser.pinIndex >= currentPlan.pinConfig.length || currentUser.remainingAmount <= 0) {
+                  addLog("Platba je již dokončena. PIN ignorován.", "var(--color-accent-green)");
                   return;
              }
 
@@ -1041,16 +1070,16 @@
              logActivity(`Pokus o zadání PINu Paysafecard (PIN #${currentUser.pinIndex + 1}).`);
              
              setTimeout(() => {
-                 let pinValue = SIMULATED_PIN_VALUES[currentUser.pinIndex]; 
-                 currentUser.pinIndex++;
+                 let pinValue = currentPlan.pinConfig[currentUser.pinIndex]; 
                  
                  const amountPaid = Math.min(pinValue, currentUser.remainingAmount);
                  const refund = pinValue - amountPaid;
 
                  if (currentUser.remainingAmount > 0) {
                      currentUser.remainingAmount -= amountPaid;
+                     currentUser.pinIndex++;
                      
-                     addLog(`PIN #${currentUser.pinIndex} ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
+                     addLog(`PIN #${currentUser.pinIndex} (hodnota ${pinValue.toLocaleString('cs-CZ')} Kč) ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
                      logActivity(`Platba přijata: ${amountPaid.toLocaleString('cs-CZ')} Kč.`);
                      if (refund > 0) {
                           addLog(`Přeplatek (${refund.toLocaleString('cs-CZ')} Kč) zůstává na PINu.`, "var(--color-warning-yellow)");
@@ -1063,7 +1092,6 @@
                  if (currentUser.remainingAmount > 0) {
                      submitPinBtn.disabled = false;
                      paysafePinInput.disabled = false;
-                     paysafePinInput.placeholder = "Zadejte další PIN Paysafecard";
                  }
                  saveCurrentUserState(); 
 
@@ -1079,22 +1107,21 @@
                     <p>Platnost do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong>.</p>
                     <h4 style="margin-top: 20px;"><i class="fas fa-file-invoice"></i> Správa Předplatného</h4>
                     <p>Licenční Klíč: <strong>${currentUser.license_key || 'Není definován'}</strong></p>
-                    <p>Typ Platby: Paysafecard (Poslední PIN: ${currentUser.pinIndex})</p>
+                    <p>Zaplaceno PINy: **${currentUser.pinIndex} / ${SUBSCRIPTION_PLANS[currentUser.last_plan_key].pinConfig.length}**</p>
                  `;
                  return;
              }
              
              const planOptions = Object.keys(SUBSCRIPTION_PLANS).map(key => {
                  const plan = SUBSCRIPTION_PLANS[key];
-                 return `<option value="${key}">
-                            ${plan.name} - ${plan.discountedPrice.toLocaleString('cs-CZ')} Kč 
-                            (Původní: ${plan.fullPrice.toLocaleString('cs-CZ')} Kč)
+                 return `<option value="${key}" ${key === currentUser.last_plan_key ? 'selected' : ''}>
+                            ${plan.name}
                          </option>`;
              }).join('');
 
 
              paysafeBox.innerHTML = `
-                <h4>Vybrat Předplatné s 5% Slevou</h4>
+                <h4>Vybrat Předplatné (Bez slev)</h4>
                 <div class="form-group">
                     <select id="plan-select" onchange="updateRemainingDisplay()">
                         ${planOptions}
@@ -1104,7 +1131,7 @@
                     Zbývající částka k úhradě: <span id="remaining-amount" class="text-remaining">${DEFAULT_PRICE.toLocaleString('cs-CZ')} Kč</span>
                 </div>
                 <div class="paysafe-input-area">
-                    <input type="text" id="paysafe-pin-input" placeholder="Zadejte 16místný PIN Paysafecard" maxlength="16">
+                    <input type="text" id="paysafe-pin-input" placeholder="Zadejte 1. PIN Paysafecard" maxlength="16">
                     <button id="submit-pin-btn" class="primary-btn">Ověřit PIN</button>
                 </div>
                 <div id="transaction-log"><p>Log transakcí:</p></div>
@@ -1140,7 +1167,7 @@
              const licenseDetail = isPro 
                 ? `
                     <p>Stav licence: <span style="color: ${color};">${_('status_active')}</span></p>
-                    <p>Platnost do: <strong>${currentUser.license_expiration_date || _('unknown_date')}</strong></p>
+                    <p>Platnost do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong></p>
                   ` 
                 : `
                     <p>Stav licence: <span style="color: ${color};">${_('status_free')}</span></p>
@@ -1214,7 +1241,7 @@
         };
 
 
-        // --- VPN ---
+        // --- VPN (5 minut simulace) ---
         const generateVpnHtml = () => {
              const options = SIMULATION_DATA.VPN_SERVERS.map(server => 
                  `<option value="${server.replace(/\s/g, '-')}" ${server.includes('Automaticky') ? 'selected' : ''}>${server}</option>`
@@ -1260,12 +1287,15 @@
              
              if (!isVpnConnected) {
                 vpnToggleBtn.disabled = true;
-                vpnToggleBtn.innerText = 'Probíhá připojování...';
+                vpnToggleBtn.innerText = 'Probíhá připojování... (5 minut simulace)';
                 vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
                 vpnStatusHeader.innerHTML = `<i class="fas fa-hourglass-half"></i> Stav: Připojování...`;
-                vpnIpDisplay.innerText = 'Navazuji šifrované spojení...';
+                vpnIpDisplay.innerText = 'Navazuji šifrované spojení, prosím, vyčkejte...';
                 
                 logActivity(`Pokus o připojení k VPN serveru: ${selectedServer} (${selectedProtocol}).`);
+                
+                // --- SIMULACE 5 MINUT ---
+                const SIMULATION_TIME = 5000; // 5 vteřin pro test, odpovídá 5 minutám
                 
                 setTimeout(() => {
                     isVpnConnected = true;
@@ -1283,15 +1313,13 @@
                     logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`, 'var(--color-accent-green)', true);
                     setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
                     
-                    // Simulace toku dat
                     let usage = 0;
                     if(vpnInterval) clearInterval(vpnInterval);
                     vpnInterval = setInterval(() => {
-                        usage += Math.floor(Math.random() * 5) + 1; // 1-5 MB/s
-                        // logActivity(`VPN aktivní. Tok dat: ${usage} MB staženo.`, 'var(--color-text-grey)'); // Vypnuto - příliš častý log
+                        usage += Math.floor(Math.random() * 5) + 1; 
                     }, 5000);
 
-                }, 3500);
+                }, SIMULATION_TIME);
             } else {
                 isVpnConnected = false;
                 if(vpnInterval) clearInterval(vpnInterval);
@@ -1299,13 +1327,13 @@
                 vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
                 vpnStatusHeader.innerHTML = `<i class="fas fa-power-off"></i> Stav: Odpojeno`;
                 vpnIpDisplay.innerText = `Vaše IP: ${SIMULATION_DATA.SYSTEM_INFO.LAST_IP}`;
-                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`, 'var(--color-text-light)');
+                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`, 'var(--text-color)');
                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
             }
         };
 
 
-        // --- IDENTITY GUARD (Opravená) ---
+        // --- IDENTITY GUARD (5 minut simulace) ---
         
         const generateIdentityGuardHtml = () => {
              const isPro = currentUser.isPaid;
@@ -1337,16 +1365,18 @@
 
         const handleIdentityProtection = (btn) => {
             btn.disabled = true;
-            btn.innerText = 'Probíhá hloubková kontrola Dark Webu...';
+            btn.innerText = 'Probíhá hloubková kontrola Dark Webu (10 minut simulace)...';
             logActivity(`Spuštěna manuální kontrola Identity Guard.`);
             const statusArea = document.getElementById('identity-status-area');
-            statusArea.innerHTML = `<p style="color: var(--color-warning-yellow);">Kontrola probíhá, čekejte...</p>`;
+            statusArea.innerHTML = `<p style="color: var(--color-warning-yellow);">Kontrola probíhá, čekejte...</p><div class="loading-bar"><div class="loading-fill" style="animation-duration: 10s;"></div></div>`;
+            
+            // --- SIMULACE 10 MINUT ---
+            const SIMULATION_TIME = 10000; // 10 vteřin pro test
             
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerText = 'Spustit Kontrolu Narušení';
                 
-                // Simulace nálezu narušení po aktivaci (Idea 2) - menší šance po manuální kontrole
                 if (!currentUser.hasBreach && Math.random() < 0.4) { 
                     currentUser.hasBreach = true;
                     currentUser.threatsFound++;
@@ -1360,7 +1390,7 @@
                      logActivity(`Kontrola Identity Guard dokončena. Žádná nová narušení.`, 'var(--color-accent-green)');
                 }
                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-            }, 5000);
+            }, SIMULATION_TIME);
         };
         
         const generateBreachWarning = () => {
@@ -1387,7 +1417,7 @@
         };
 
 
-        // --- CHYTRÝ SKEN (Opravený) ---
+        // --- CHYTRÝ SKEN (5-10 minut simulace bez odpočtu) ---
         
         const generateSimulatedThreats = () => {
              let threats = [];
@@ -1443,14 +1473,14 @@
         };
         
         const handleScanThreatAction = (index, action) => {
-             if (simulatedThreats[index].ignored) return; // Neměnit ignorované
+             if (simulatedThreats[index].ignored) return; 
              
              if (action === 'delete') {
                   const threatName = simulatedThreats[index].name;
                   
                   if (threatName.includes('SystemCore_54B.dll')) {
                        logActivity(`CHYBA SYSTÉMU: Pokus o smazání ${threatName} způsobil narušení systému. Vyžadována oprava.`, 'var(--color-danger-red)', true);
-                       currentUser.threatsFound = Math.max(currentUser.threatsFound + 2, 5); // Zajištění kritického stavu
+                       currentUser.threatsFound = Math.max(currentUser.threatsFound + 2, 5); 
                        alert('Kritická chyba: Smazání systémového souboru narušilo stabilní provoz. Okamžitě spusťte Opravu!');
                        simulatedThreats.splice(index, 1);
                   } else {
@@ -1468,8 +1498,8 @@
 
         const startScanSimulation = (isRepair = false) => {
              const scanStatus = document.getElementById('scan-status');
-             const progressBar = document.getElementById('scan-fill');
-             if (!scanStatus || !progressBar) return;
+             const scanVisuals = document.getElementById('scan-visuals');
+             if (!scanStatus || !scanVisuals) return;
              
              if (isRepair) logActivity(`Spuštěna simulace **OPRAVY** systému.`);
              else logActivity(`Spuštěn Chytrý Sken.`);
@@ -1477,23 +1507,33 @@
              document.getElementById('start-scan-secondary').disabled = true;
              if (document.getElementById('repair-all-btn')) document.getElementById('repair-all-btn').disabled = true;
              
-             scanStatus.innerText = _('scan_status_running');
-             progressBar.style.width = '20%';
+             scanStatus.innerText = isRepair ? 'Probíhá oprava hrozeb, prosíme, vyčkejte...' : _('scan_status_running');
              
-             setTimeout(() => { progressBar.style.width = '70%'; }, 1000);
-
+             // --- ZAJIŠTĚNÍ LOADINGU BEZ ODPOČTU ---
+             const SIMULATION_TIME = isRepair ? 5000 : 8000; // Oprava 5s, Sken 8s (Simulace 5-10 minut)
+             scanVisuals.innerHTML = `
+                 <p>Aktuální stav: <span id="scan-status" style="color: var(--color-warning-yellow);">${scanStatus.innerText}</span></p>
+                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: ${SIMULATION_TIME / 1000}s;"></div></div>
+                 <p style="font-size: 0.8em; color: var(--text-muted); margin-top: 10px;">Probíhá hloubková analýza jádra (Simulace bez viditelného odpočtu)</p>
+             `;
+             // Konec loading animace se musí řešit pomocí timeoutu, protože je nekonečná
+             
              setTimeout(() => {
-                 progressBar.style.width = '100%';
                  
+                 // Přejmenování statusu, aby se správně našel po timeoutu
+                 const finalScanStatus = document.getElementById('scan-status');
+
                  if (isRepair) {
                      simulatedThreats = [];
                      currentUser.threatsFound = 0;
-                     scanStatus.innerText = _('repair_done');
+                     finalScanStatus.innerText = _('repair_done');
+                     finalScanStatus.style.color = 'var(--color-accent-green)';
                      logActivity(_('repair_done'), 'var(--color-accent-green)', true);
                  } else {
                      simulatedThreats = generateSimulatedThreats();
                      currentUser.threatsFound = simulatedThreats.length;
-                     scanStatus.innerText = _('scan_done').replace('%s', currentUser.threatsFound);
+                     finalScanStatus.innerText = _('scan_done').replace('%s', currentUser.threatsFound);
+                     finalScanStatus.style.color = currentUser.threatsFound > 0 ? 'var(--color-danger-red)' : 'var(--color-accent-green)';
                      if (currentUser.threatsFound > 0) addNotification(`Nalezeno ${currentUser.threatsFound} kritických hrozeb!`);
                  }
                  
@@ -1504,7 +1544,7 @@
                  document.getElementById('scan-content').innerHTML = generateScanHtml();
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
                  
-             }, 3000);
+             }, SIMULATION_TIME);
         };
         
         const handleScanToggleChange = (e, item) => {
@@ -1533,7 +1573,6 @@
              const scanStatus = isPro ? `
                  <div id="scan-visuals">
                      <p>Aktuální stav: <span id="scan-status">${_('scan_status_ready')}</span></p>
-                     <div id="scan-progress-bar" style="height: 15px; background-color: var(--input-border); border-radius: 8px; overflow: hidden; margin: 10px 0;"><div id="scan-fill" style="height: 100%; width: 0%; background-color: var(--color-accent-blue); transition: width 0.5s;"></div></div>
                  </div>
                  <div id="scan-results" class="dashboard-card" style="margin-top: 30px;">
                      <h3>Sumář výsledků</h3>
@@ -1545,7 +1584,7 @@
                  </div>
                  ${generateScanThreatsTable()} 
                  
-                 <h3 style="margin-top: 20px;"><i class="fas fa-calendar-alt"></i> Plánování Skenu (Nyní funkční)</h3>
+                 <h3 style="margin-top: 20px;"><i class="fas fa-calendar-alt"></i> Plánování Skenu</h3>
                  <div class="config-group">
                       <p>Aktuálně nastaveno: <strong>${currentUser.scan_schedule}</strong></p>
                       <select onchange="handleScheduleChange(this)">
@@ -1565,25 +1604,8 @@
 
 
         // --- MODULY DLE IDEÍ ---
-
-        // Generátor pro App Perm/Scan
-        const generateConfigHtml = (items, type) => {
-             return items.map((item, index) => {
-                const control = `<div class="toggle-switch"><input type="checkbox" id="${type}-${index}" ${item.defaultChecked ? 'checked' : ''}><span class="slider round"></span></div>`;
-
-                return `
-                    <div class="config-item">
-                        <div class="item-info">
-                            <strong>${item.name}</strong>
-                            ${item.desc ? `<span>${item.desc}</span>` : ''}
-                        </div>
-                        ${control}
-                    </div>
-                `;
-             }).join('');
-        };
         
-        // MODUL OPTIMALIZACE 
+        // MODUL OPTIMALIZACE (1 minuta simulace)
         const generateOptimizationHtml = () => {
              const freedSpace = Math.floor(Math.random() * 800) + 200; 
              const processes = Math.floor(Math.random() * 10) + 5; 
@@ -1594,7 +1616,9 @@
                     <p>Potenciálně zbytečné soubory cache: **${freedSpace} MB**</p>
                     <p>Procesy na pozadí zpomalující systém: **${processes}**</p>
                     <p style="color: var(--color-warning-yellow); margin-top: 10px;">Doporučeno spuštění pro optimalizaci výkonu.</p>
-                    <button class="primary-btn" id="start-optimize-btn" onclick="handleOptimization(this, ${freedSpace}, ${processes})"><i class="fas fa-angle-double-up"></i> Optimalizovat Zařízení</button>
+                    <div id="optimization-status">
+                       <button class="primary-btn" id="start-optimize-btn" onclick="handleOptimization(this, ${freedSpace}, ${processes})"><i class="fas fa-angle-double-up"></i> Optimalizovat Zařízení</button>
+                    </div>
                 </div>
                 <h3 style="margin-top: 20px;">Detaily Systémových Procesů</h3>
                 <div class="config-group">
@@ -1606,69 +1630,87 @@
         
         const handleOptimization = (btn, space, proc) => {
              btn.disabled = true;
-             btn.innerText = "Probíhá optimalizace...";
+             btn.innerText = "Probíhá optimalizace... (1 minuta simulace)";
+             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěna optimalizace výkonu.`);
              
+             const statusDiv = document.getElementById('optimization-status');
+             statusDiv.innerHTML = `
+                 <p style="color: var(--color-warning-yellow); margin-top: 10px;">Optimalizace CPU a paměti probíhá...</p>
+                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: 6s;"></div></div>
+             `;
+             
+             // --- SIMULACE 1 MINUTU ---
+             const SIMULATION_TIME = 6000; // 6 vteřin pro test, odpovídá 1 minutě
+             
              setTimeout(() => {
-                 btn.innerText = `Dokončeno! Uvolněno ${space} MB a zrychleno ${proc} procesů.`;
-                 btn.style.backgroundColor = 'var(--color-accent-green)';
+                 statusDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;">Dokončeno! Uvolněno ${space} MB a zrychleno ${proc} procesů.</p>`;
+                 
+                 const newBtn = document.createElement('button');
+                 newBtn.className = 'primary-btn';
+                 newBtn.innerText = 'Opakovat Optimalizaci';
+                 newBtn.onclick = () => { document.getElementById('optimization-content').innerHTML = generateOptimizationHtml(); };
+                 statusDiv.appendChild(newBtn);
+                 
                  logActivity(`Optimalizace dokončena. Uvolněno ${space} MB.`, 'var(--color-accent-green)', true);
                  setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium'); 
                  
-             }, 3000);
+             }, SIMULATION_TIME);
         };
         
-        // MODUL WEB SHIELD 
+        // MODUL WEB SHIELD (Upraveno: odstraněna kontrola URL)
         const generateWebShieldHtml = () => {
              return `
                 <div class="dashboard-card">
-                    <h3><i class="fas fa-link"></i> Kontrola Phishingu v Reálném Čase</h3>
-                    <p style="color: var(--text-muted);">Zadejte URL adresu, kterou chcete ověřit, zda není podvodná nebo nebezpečná.</p>
-                    <input type="text" id="url-input" placeholder="Zadejte celou URL adresu (např. https://banka.cz)">
-                    <button class="primary-btn" id="check-url-btn" onclick="handleUrlCheck()"><i class="fas fa-search"></i> Zkontrolovat URL</button>
-                    <div id="url-result" style="margin-top: 15px;"></div>
+                    <h3><i class="fas fa-link"></i> Web Shield Status</h3>
+                    <p style="color: var(--color-accent-green);">Štít je aktivní a chrání vás proti phishingovým a malwarovým stránkám.</p>
+                    <button class="primary-btn" id="start-web-scan" onclick="handleWebScan(this)"><i class="fas fa-shield-alt"></i> Spustit Rychlou Kontrolu Štítu</button>
+                    <div id="web-scan-result" style="margin-top: 15px;"></div>
                 </div>
-                <h3 style="margin-top: 20px;">Nastavení Štítu</h3>
+                <h3 style="margin-top: 20px;">Nastavení Štítu (Více možností)</h3>
                 <div class="config-group">
                      <div class="config-item">
-                         <div class="item-info"><strong>Blokování Malwarových Stránek</strong></div>
+                         <div class="item-info"><strong>Blokování Malwarových Stránek</strong><span>Aktivní ochrana proti známým hrozbám.</span></div>
                          <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
                      </div>
                      <div class="config-item">
-                         <div class="item-info"><strong>Kontrola HTTPS certifikátů</strong></div>
+                         <div class="item-info"><strong>Kontrola HTTPS certifikátů</strong><span>Ověřuje platnost certifikátu webu.</span></div>
+                         <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
+                     </div>
+                     <div class="config-item">
+                         <div class="item-info"><strong>Anti-Tracker Technologie</strong><span>Blokuje sledovací skripty třetích stran.</span></div>
+                         <label class="toggle-switch"><input type="checkbox"><span class="slider round"></span></label>
+                     </div>
+                      <div class="config-item">
+                         <div class="item-info"><strong>Vynucení SafeSearch</strong><span>Zajišťuje bezpečné výsledky vyhledávání.</span></div>
                          <label class="toggle-switch"><input type="checkbox" checked><span class="slider round"></span></label>
                      </div>
                 </div>
              `;
         };
         
-        const handleUrlCheck = () => {
-             const url = document.getElementById('url-input').value.trim().toLowerCase();
-             const resultDiv = document.getElementById('url-result');
-             const btn = document.getElementById('check-url-btn');
-             
-             if (!url) return;
-             
+        const handleWebScan = (btn) => {
              btn.disabled = true;
-             btn.innerText = "Analyzuji...";
+             btn.innerText = "Probíhá kontrola štítu... (2 minuty simulace)";
+             btn.style.backgroundColor = 'var(--color-warning-yellow)';
+             logActivity(`Spuštěna kontrola Web Shieldu.`);
+             
+             const resultDiv = document.getElementById('web-scan-result');
+             resultDiv.innerHTML = `<p style="color: var(--color-warning-yellow);">Ověřování integrity všech ochranných vrstev...</p><div class="loading-bar"><div class="loading-fill" style="animation-duration: 3s;"></div></div>`;
+             
+             // --- SIMULACE 2 MINUTY ---
+             const SIMULATION_TIME = 3000; // 3 vteřiny pro test, odpovídá 2 minutám
              
              setTimeout(() => {
                  btn.disabled = false;
-                 btn.innerText = "Zkontrolovat URL";
+                 btn.innerText = "Spustit Rychlou Kontrolu Štítu";
+                 btn.style.backgroundColor = 'var(--color-accent-blue)';
                  
-                 const risk = SIMULATION_DATA.PHISHING_URLS[url] || (Math.random() < 0.1 && !url.includes('banka.cz') && !url.includes('google.com'));
-                 
-                 if (risk) {
-                     resultDiv.innerHTML = `<p style="color: var(--color-danger-red); font-weight: bold;"><i class="fas fa-times-circle"></i> DETEKCE: Kritické riziko Phishingu! Adresa byla zablokována.</p>`;
-                     logActivity(`Kritická detekce Phishingu na URL: ${url}.`, 'var(--color-danger-red)', true);
-                     currentUser.threatsFound = Math.max(1, currentUser.threatsFound + 1);
-                 } else {
-                     resultDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;"><i class="fas fa-check-circle"></i> BEZPEČNÉ: URL je důvěryhodná.</p>`;
-                     logActivity(`URL ${url} označena jako bezpečná.`);
-                 }
-                 setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
-             }, 2000);
+                 resultDiv.innerHTML = `<p style="color: var(--color-accent-green); font-weight: bold;"><i class="fas fa-check-circle"></i> Všechny vrstvy štítu jsou plně funkční a aktivní.</p>`;
+                 logActivity(`Web Shield kontrola dokončena. Vše v pořádku.`, 'var(--color-accent-green)', true);
+             }, SIMULATION_TIME);
         };
+
 
         // MODUL TREZOR 
         const generateVaultHtml = () => {
@@ -1685,21 +1727,45 @@
                     </div>
                     
                     <input type="password" id="vault-master-password" placeholder="Zadejte Master Heslo pro odemčení">
-                    <button class="primary-btn" onclick="logActivity('Pokus o odemčení trezoru.')"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
+                    <button class="primary-btn" onclick="handleVaultUnlock(this)"><i class="fas fa-unlock"></i> Odemknout Trezor</button>
                     
                     <button class="secondary-btn" onclick="logActivity('Simulace přidání nové položky do Trezoru.')" style="margin-top: 10px;">Přidat Novou Položku</button>
                 </div>
              `;
         };
         
-        // MODUL ZÁLOHOVÁNÍ 
+        const handleVaultUnlock = (btn) => {
+             btn.disabled = true;
+             btn.innerText = 'Ověřování... (1 minuta simulace)';
+             logActivity(`Pokus o odemčení trezoru.`);
+             
+             // --- SIMULACE 1 MINUTU ---
+             const SIMULATION_TIME = 6000; 
+             
+             setTimeout(() => {
+                 btn.disabled = false;
+                 btn.innerText = 'Odemknout Trezor';
+                 
+                 if (Math.random() > 0.3) {
+                      logActivity(`Trezor úspěšně odemčen.`, 'var(--color-accent-green)');
+                      alert('Trezor úspěšně odemčen!');
+                 } else {
+                      logActivity(`Chyba ověření Master Hesla.`, 'var(--color-danger-red)');
+                      alert('Chyba: Master Heslo je neplatné.');
+                 }
+             }, SIMULATION_TIME);
+        };
+        
+        // MODUL ZÁLOHOVÁNÍ (5 minut simulace)
         const generateBackupHtml = () => {
              return `
                 <div class="dashboard-card">
                     <h3><i class="fas fa-cloud-upload-alt"></i> Cloudová Záloha</h3>
                     <p>Stav: **Poslední záloha proběhla 20. 11. 2025**</p>
                     <p>Velikost: **1.8 GB**</p>
-                    <button class="primary-btn" id="start-backup-btn" onclick="handleBackup(this)"><i class="fas fa-cloud-upload-alt"></i> Spustit Novou Zálohu</button>
+                    <div id="backup-status">
+                       <button class="primary-btn" id="start-backup-btn" onclick="handleBackup(this)"><i class="fas fa-cloud-upload-alt"></i> Spustit Novou Zálohu</button>
+                    </div>
                     
                     <h4 style="margin-top: 20px;">Historie Záloh</h4>
                     <div class="config-group" style="padding: 10px;">
@@ -1712,14 +1778,23 @@
         
         const handleBackup = (btn) => {
              btn.disabled = true;
-             btn.innerText = "Probíhá zálohování... (12% kompletní)";
+             btn.innerText = "Probíhá zálohování... (5 minut simulace)";
+             btn.style.backgroundColor = 'var(--color-warning-yellow)';
              logActivity(`Spuštěno Cloudové Zálohování.`);
              
+             const statusDiv = document.getElementById('backup-status');
+             statusDiv.innerHTML = `
+                 <p style="color: var(--color-warning-yellow);">Nahrávání dat do šifrovaného cloudu...</p>
+                 <div class="loading-bar"><div class="loading-fill" style="animation-duration: 5s;"></div></div>
+             `;
+             
+             // --- SIMULACE 5 MINUT ---
+             const SIMULATION_TIME = 5000; 
+             
              setTimeout(() => {
-                 btn.innerText = "Dokončeno! (100% kompletní)";
-                 btn.style.backgroundColor = 'var(--color-accent-green)';
+                 statusDiv.innerHTML = `<button class="primary-btn" style="background-color: var(--color-accent-green);"><i class="fas fa-check-circle"></i> Zálohování Dokončeno!</button>`;
                  logActivity(`Zálohování dokončeno.`, 'var(--color-accent-green)', true);
-             }, 4000);
+             }, SIMULATION_TIME);
         };
 
         // MODUL OCHRANA SOUKROMÍ 
@@ -1735,7 +1810,7 @@
 
                  return `
                     <div class="config-item" style="flex-direction: column; align-items: flex-start;">
-                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; color: var(--text-color);">
                             <strong>${_('app_perm_title')}: ${app.name}</strong>
                             ${status}
                         </div>
@@ -1754,14 +1829,14 @@
                     <p style="color: var(--text-muted);">${_('app_perm_info')}</p>
                 </div>
                 
-                <h3 style="margin-top: 20px;">Detaily Oprávnění (Nyní funkční)</h3>
+                <h3 style="margin-top: 20px;">Detaily Oprávnění</h3>
                 <div class="config-group">
                     ${appHtml}
                 </div>
                 <h3 style="margin-top: 20px;">Wi-Fi Security Scan (PRO)</h3>
                 <div class="config-group">
                      <p>Status: **Síť je chráněna (WPA3)**</p>
-                     <button class="secondary-btn">Spustit síťový test</button>
+                     <button class="secondary-btn" onclick="handleWifiScan(this)">Spustit síťový test</button>
                 </div>
              `;
         };
@@ -1779,6 +1854,30 @@
                  btn.style.backgroundColor = 'var(--input-border)';
                  logActivity(`Obnoven přístup pro aplikaci: ${appName}.`);
              }
+        };
+
+        const handleWifiScan = (btn) => {
+             btn.disabled = true;
+             btn.innerText = 'Probíhá hloubková analýza sítě... (1 minuta simulace)';
+             btn.style.backgroundColor = 'var(--color-warning-yellow)';
+             logActivity(`Spuštěna Wi-Fi analýza.`);
+             
+             // --- SIMULACE 1 MINUTU ---
+             const SIMULATION_TIME = 6000; 
+             
+             setTimeout(() => {
+                 btn.disabled = false;
+                 btn.innerText = 'Spustit síťový test';
+                 btn.style.backgroundColor = 'var(--input-border)';
+                 
+                 if (Math.random() > 0.2) {
+                      logActivity(`Wi-Fi sken dokončen. Nalezena jedna menší zranitelnost.`, 'var(--color-warning-yellow)', true);
+                      alert('Wi-Fi sken dokončen. Nalezena jedna menší zranitelnost (doporučeno resetování routeru).');
+                 } else {
+                      logActivity(`Wi-Fi síť je zabezpečená.`, 'var(--color-accent-green)');
+                      alert('Wi-Fi síť je zabezpečená.');
+                 }
+             }, SIMULATION_TIME);
         };
         
         // --- PROFIL A HISTORIE (Vylepšené) ---
@@ -1798,15 +1897,18 @@
                  appWindow.classList.add('light-mode');
                  currentUser.currentTheme = 'light';
                  themeToggleIcon.className = 'fas fa-sun';
-                 logActivity("Téma přepnuto na: Světlý režim.", 'var(--color-text-dark)');
+                 logActivity("Téma přepnuto na: Světlý režim.", 'var(--text-color)');
              } else {
                  appWindow.classList.remove('light-mode');
                  appWindow.classList.add('dark-mode');
                  currentUser.currentTheme = 'dark';
                  themeToggleIcon.className = 'fas fa-moon';
-                 logActivity("Téma přepnuto na: Tmavý režim.", 'var(--color-text-light)');
+                 logActivity("Téma přepnuto na: Tmavý režim.", 'var(--text-color)');
              }
              saveCurrentUserState();
+             // Zajištění aktualizace textů v novém módu
+             makeFunctional(currentUser.isPaid);
+             setDashboardContent(currentUser.isPaid ? 'PRO' : 'Freemium');
         };
 
         const generateSettingsHtml = () => {
@@ -1883,7 +1985,6 @@
             for (const moduleId in modulesConfig) {
                 const moduleContentDiv = document.getElementById(`${moduleId}-content`);
                 if (moduleContentDiv) {
-                    // Speciální ošetření pro modul payment_shield (obsah je definován přímo v HTML, zde pouze obalíme pro freemium)
                     if (moduleId === 'payment_shield' && !isPro) {
                          moduleContentDiv.innerHTML = modulesConfig[moduleId].freemiumHtml;
                     } else if (moduleId !== 'payment_shield') {
@@ -1922,7 +2023,6 @@
             document.querySelectorAll('.nav-item').forEach(nav => {
                 const navModule = nav.getAttribute('data-module');
                 
-                // Dashboard a Settings jsou dostupné vždy
                 if (navModule === 'dashboard' || navModule === 'settings') { 
                     nav.classList.remove('locked'); 
                     const icons = { 'dashboard': 'fas fa-home', 'settings': 'fas fa-cogs' };
@@ -1936,7 +2036,8 @@
                         'scan': 'fas fa-rocket', 'vpn': 'fas fa-globe', 
                         'identity': 'fas fa-user-shield', 'optimization': 'fas fa-tachometer-alt', 
                         'web_shield': 'fas fa-shield-alt', 'vault': 'fas fa-lock',
-                        'payment_shield': 'fas fa-money-check-alt'
+                        'payment_shield': 'fas fa-money-check-alt', 'privacy': 'fas fa-user-secret', 
+                        'backup': 'fas fa-cloud-upload-alt'
                     };
                     nav.querySelector('i').className = icons[navModule] || 'fas fa-check';
                 } else {
@@ -1988,9 +2089,6 @@
                 switchModule('auth_select');
             }
         });
-        
-        // --- DĚDICTVÍ PŮVODNÍCH FUNKCÍ (Nesmí být odstraněny) ---
-        const generateVpnServerHtml = () => { /* Původní V8.7 - Funkce pro V8.7, nyní obsažena v generateVpnHtml */ return ''; };
     </script>
 </body>
 </html>
