@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V8.0 (Rozšířené PRO Moduly a Profil)</title>
+    <title>Nexus Prime Security - V8.1 (Opravený Dashboard a Cyber Defense)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* --- CSS STYLING --- */
@@ -35,7 +35,7 @@
             height: 700px; 
             background-color: var(--color-dark-bg);
             border-radius: 25px; 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 10px #000; 
+            box-shadow: 0 20px 50px rgba(0 0 0 / 50%), 0 0 0 10px #000; 
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -102,6 +102,17 @@
             margin-bottom: 10px;
             transition: background-color 0.2s;
         }
+        .primary-btn {
+            background-color: var(--color-accent-blue);
+            color: white;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+        .secondary-btn {
+            background-color: var(--color-border);
+            color: var(--color-text-light);
+            margin-top: 15px;
+        }
         
         /* Formuláře */
         .auth-form-container {
@@ -109,6 +120,17 @@
              padding: 30px 20px;
              border-radius: 12px;
              margin-top: 30px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            background-color: var(--color-darker-bg);
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+            margin-bottom: 15px;
         }
         
         /* NAVIGACE */
@@ -133,6 +155,7 @@
             color: var(--color-text-grey);
             font-size: 0.75em;
             flex: 1;
+            cursor: pointer;
         }
         .nav-item.active { color: var(--color-accent-blue); }
         .nav-item.locked { opacity: 0.6; color: var(--color-danger-red); cursor: not-allowed; }
@@ -145,7 +168,6 @@
              border-radius: 10px;
              margin-bottom: 20px;
         }
-        .config-header { font-size: 1.1em; font-weight: bold; color: var(--color-accent-blue); margin-bottom: 10px; }
         .config-item {
             display: flex;
             justify-content: space-between;
@@ -157,7 +179,7 @@
         .item-info strong { display: block; }
         .item-info span { font-size: 0.8em; color: var(--color-text-grey); }
 
-        /* Toggle/Checkbox styly (z V7.1) */
+        /* Toggle/Checkbox styly */
         .toggle-switch {
             position: relative;
             display: inline-block;
@@ -319,12 +341,11 @@
 
         let currentUser = null;
         
-        // --- POMOCNÉ FUNKCE A TRVALOST DAT (Zkráceno, stejné jako V7.1) ---
-        
-        const getRegisteredUsers = () => { /* ... */ return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY)) || {}; };
-        const saveRegisteredUsers = (users) => { /* ... */ localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
-        const saveCurrentUserState = () => { /* ... */ if (currentUser) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser)); };
-        const loadCurrentUserState = () => { /* ... */ 
+        // --- POMOCNÉ FUNKCE A TRVALOST DAT ---
+        const getRegisteredUsers = () => { return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY)) || {}; };
+        const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
+        const saveCurrentUserState = () => { if (currentUser) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser)); };
+        const loadCurrentUserState = () => { 
              const stored = localStorage.getItem(CURRENT_USER_KEY);
              if (stored) {
                  const storedUser = JSON.parse(stored);
@@ -355,7 +376,7 @@
         };
 
         // --- AUTENTIZACE (Zůstává stejná) ---
-        const handleRegister = () => { /* ... logika z V7.1 ... */ 
+        const handleRegister = () => { 
              const regUsername = document.getElementById('reg-username').value.trim();
              const regPassword = document.getElementById('reg-password').value.trim();
              const users = getRegisteredUsers();
@@ -369,20 +390,14 @@
                   return;
              }
              
-             const newUser = {
-                 username: regUsername,
-                 password: regPassword, 
-                 isPaid: false,
-                 remainingAmount: PRO_PRICE,
-                 pinIndex: 0
-             };
+             const newUser = { username: regUsername, password: regPassword, isPaid: false, remainingAmount: PRO_PRICE, pinIndex: 0 };
              users[regUsername] = newUser;
              saveRegisteredUsers(users);
              currentUser = newUser;
              saveCurrentUserState();
              unlockFeaturesUI('Freemium', `Vítejte, ${regUsername}! Váš účet byl vytvořen.`, 'dashboard');
         };
-        const handleLogin = () => { /* ... logika z V7.1 ... */ 
+        const handleLogin = () => { 
              const loginUsername = document.getElementById('login-username').value.trim();
              const loginPassword = document.getElementById('login-password').value.trim();
              const users = getRegisteredUsers();
@@ -406,7 +421,7 @@
              document.getElementById('login-message').innerText = 'Chyba: Neplatné uživatelské jméno nebo heslo.';
              document.getElementById('login-message').style.color = 'var(--color-danger-red)';
         };
-        const handleLogout = () => { /* ... logika z V7.1 ... */ 
+        const handleLogout = () => { 
              currentUser = null;
              localStorage.removeItem(CURRENT_USER_KEY);
              document.getElementById('header-username').innerText = 'Odhlášeno';
@@ -420,17 +435,157 @@
              switchModule('auth_select');
         };
 
-        // --- PLATEBNÍ MODUL (Zůstává stejný) ---
-        const updateRemainingDisplay = () => { /* ... logika z V7.1 ... */ };
-        const addLog = (message, color) => { /* ... logika z V7.1 ... */ };
-        const handlePaysafePinSubmit = () => { /* ... logika z V7.1 ... */ };
-        const setPaysafeModuleContent = () => { /* ... logika z V7.1 ... */ };
-        const setDashboardContent = (licenseType) => { /* ... logika z V7.1 ... */ };
-        
-        // --- NOVÁ LOGIKA PRO ROZŠÍŘENÉ MODULY ---
+        // --- PLATEBNÍ MODUL LOGIKA ---
+         const updateRemainingDisplay = () => {
+             const remainingAmountSpan = document.getElementById('remaining-amount');
+             if (!remainingAmountSpan || !currentUser) return;
+             
+             remainingAmountSpan.innerText = currentUser.remainingAmount.toLocaleString('cs-CZ') + ' Kč';
 
+             if (currentUser.remainingAmount <= 0) {
+                 remainingAmountSpan.classList.remove('text-remaining');
+                 remainingAmountSpan.classList.add('text-paid');
+                 
+                 currentUser.isPaid = true;
+                 
+                 const users = getRegisteredUsers();
+                 if (users[currentUser.username]) {
+                    users[currentUser.username].isPaid = true;
+                    users[currentUser.username].remainingAmount = 0;
+                    users[currentUser.username].pinIndex = currentUser.pinIndex;
+                    saveRegisteredUsers(users);
+                 }
+                 saveCurrentUserState();
+
+                 const paysafeBox = document.getElementById('paysafe-payment-box');
+                 paysafeBox.innerHTML = `
+                    <h3 style="color: var(--color-accent-green);">Platba dokončena!</h3>
+                    <p>Licence **Nexus PRO** byla úspěšně aktivována. Všechny prémiové funkce jsou nyní odemčeny!</p>
+                    <button class="primary-btn" onclick="unlockFeaturesUI('PRO', 'Gratulujeme! PRO verze je aktivní.', 'dashboard')">Pokračovat na Dashboard</button>
+                 `;
+             }
+         };
+         
+         const addLog = (message, color) => {
+             const transactionLog = document.getElementById('transaction-log');
+             if (!transactionLog) return;
+             const p = document.createElement('p');
+             p.innerHTML = `<span style="color: ${color};">• ${message}</span>`;
+             transactionLog.insertBefore(p, transactionLog.children[1]); 
+             transactionLog.scrollTop = 0;
+         };
+         
+         const handlePaysafePinSubmit = () => {
+             const paysafePinInput = document.getElementById('paysafe-pin-input');
+             const submitPinBtn = document.getElementById('submit-pin-btn');
+             const pin = paysafePinInput.value.trim();
+             
+             if (pin.length !== 16 || !/^\d+$/.test(pin)) {
+                 addLog("Chyba: PIN musí být 16místné číslo.", "var(--color-danger-red)");
+                 return;
+             }
+             
+             if (currentUser.pinIndex >= SIMULATED_PIN_VALUES.length || currentUser.isPaid) {
+                  addLog("Platba již byla dokončena.", "var(--color-accent-green)");
+                  return;
+             }
+
+             submitPinBtn.disabled = true;
+             paysafePinInput.disabled = true;
+             addLog(`Ověřování PINu ${pin}...`, "var(--color-warning-yellow)");
+             
+             setTimeout(() => {
+                 let pinValue = SIMULATED_PIN_VALUES[currentUser.pinIndex]; 
+                 currentUser.pinIndex++;
+                 
+                 const amountPaid = Math.min(pinValue, currentUser.remainingAmount);
+                 const refund = pinValue - amountPaid;
+
+                 if (currentUser.remainingAmount > 0) {
+                     currentUser.remainingAmount -= amountPaid;
+                     
+                     addLog(`PIN #${currentUser.pinIndex} ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
+                     if (refund > 0) {
+                          addLog(`Přeplatek (${refund.toLocaleString('cs-CZ')} Kč) zůstává na PINu.`, "var(--color-warning-yellow)");
+                     }
+                 } 
+                 
+                 updateRemainingDisplay();
+                 paysafePinInput.value = '';
+                 
+                 if (currentUser.remainingAmount > 0) {
+                     submitPinBtn.disabled = false;
+                     paysafePinInput.disabled = false;
+                     paysafePinInput.placeholder = "Zadejte další PIN Paysafecard";
+                 }
+                 saveCurrentUserState(); 
+
+             }, 2500); 
+         };
+        
+        const setPaysafeModuleContent = () => {
+             const paysafeBox = document.getElementById('paysafe-payment-box');
+             if (!currentUser) return;
+
+             paysafeBox.innerHTML = `
+                <h4>Nexus PRO (Roční licence): <span style="color: var(--color-accent-blue);">7 999 Kč</span></h4>
+                <div id="paysafe-status-bar" style="padding: 15px; background-color: #151520; border-radius: 8px; font-size: 1.2em; font-weight: bold; margin-bottom: 20px;">
+                    Zbývající částka k úhradě: <span id="remaining-amount" class="text-remaining">${currentUser.remainingAmount.toLocaleString('cs-CZ')} Kč</span>
+                </div>
+                <div class="paysafe-input-area">
+                    <input type="text" id="paysafe-pin-input" placeholder="Zadejte 16místný PIN Paysafecard" maxlength="16">
+                    <button id="submit-pin-btn" class="primary-btn">Ověřit PIN</button>
+                </div>
+                <div id="transaction-log"><p>Log transakcí:</p></div>
+                <button class="secondary-btn" onclick="switchModule('dashboard')">Zpět na Dashboard</button>
+             `;
+             
+             document.getElementById('submit-pin-btn').addEventListener('click', handlePaysafePinSubmit);
+             updateRemainingDisplay();
+        };
+
+        // --- OPRAVENÁ LOGIKA PRO DASHBOARD ---
+        const setDashboardContent = (licenseType) => {
+             const isPro = licenseType === 'PRO';
+             const color = isPro ? 'var(--color-accent-green)' : 'var(--color-danger-red)';
+             const statusText = isPro ? 'Optimální zabezpečení PRO!' : 'Vyžaduje okamžitou akci!';
+             const score = isPro ? '100%' : '65%';
+             const buttonText = isPro ? 'Spustit PRO Sken' : 'Koupit PRO verzi';
+             
+             const dashboardModule = document.getElementById('dashboard');
+             
+             dashboardModule.innerHTML = `
+                <h2>Domovská Obrazovka</h2>
+                <div id="security-score-card" style="background: linear-gradient(135deg, ${isPro ? '#1e2c1e' : '#2a2a3b'}, ${isPro ? '#152015' : '#1e1e2c'}); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <div id="score-gauge" style="border-radius: 50%; border: 8px solid ${color}; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; font-size: 2em; margin: 0 auto;">${score}</div>
+                    <h3 style="margin-top: 15px;">Stav Systému</h3>
+                    <p id="system-status-text" style="color: ${color}; font-size: 1.1em; font-weight: bold;">${statusText}</p>
+                    <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: ${isPro ? 'Nyní' : 'Nikdy'}</p>
+                    <button id="start-smart-scan-dashboard" class="primary-btn">${buttonText}</button>
+                </div>
+                
+                <h3 style="margin-top: 20px; font-weight: 500;">Přehled Účtu</h3>
+                <div style="background-color: #2a2a3b; padding: 15px; border-radius: 10px;">
+                    <p>Uživatel: <strong>${currentUser.username}</strong></p>
+                    <p>Stav licence: <span style="color: ${color};">${isPro ? 'Aktivní PRO verze' : 'Freemium (Základní ochrana)'}</span></p>
+                    ${isPro ? '' : `<button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`}
+                    <button class="secondary-btn" onclick="handleLogout()">Odhlásit se</button>
+                </div>
+             `;
+             
+             const scanBtn = document.getElementById('start-smart-scan-dashboard');
+             if (scanBtn) {
+                 if (isPro) {
+                     scanBtn.addEventListener('click', () => switchModule('scan'));
+                 } else {
+                     scanBtn.addEventListener('click', () => switchModule('paysafe'));
+                 }
+             }
+        };
+
+
+        // --- LOGIKA PRO ROZŠÍŘENÉ MODULY (DATA) ---
         const SIMULATION_DATA = {
-            // 20+ položek pro Identity Guard
             IDENTITY_ITEMS: [
                 { name: "Primární e-mail", type: "email", defaultChecked: true },
                 { name: "Záložní e-mail", type: "email", defaultChecked: false },
@@ -456,7 +611,7 @@
                 { name: "Smlouva o službách", type: "document", defaultChecked: false },
             ],
 
-            // 25+ položek pro Cyber Defense
+            // 25+ položek pro Cyber Defense (OPRAVENO: Tato data chyběla v globálním rozsahu)
             CYBER_DEFENSE_FEATURES: [
                 { name: "Adaptivní Firewall", desc: "Dynamicky blokuje hrozby založené na chování.", default: true },
                 { name: "Ochrana proti Zero-Day útokům", desc: "Využívá AI pro detekci nových hrozeb.", default: true },
@@ -485,7 +640,6 @@
                 { name: "Monitorování změn registru", desc: "Upozorní na neoprávněné změny.", default: true },
             ],
             
-            // 20+ položek pro Chytrý Sken
             SCAN_AREAS: [
                 { name: "Systémové soubory (jádro OS)", default: true },
                 { name: "Aplikace třetích stran", default: true },
@@ -511,7 +665,6 @@
                 { name: "Nezabezpečené API", default: false },
             ],
             
-            // 20+ položek pro VPN
             VPN_SERVERS: [
                 "Automaticky (Nejrychlejší)", "Česká republika (Praha 1)", "Česká republika (Brno)", 
                 "Německo (Frankfurt)", "Polsko (Varšava)", "Rakousko (Vídeň)", "Slovensko (Bratislava)", 
@@ -526,7 +679,6 @@
         // --- FUNKCE PRO GENERACI HTML ROZŠÍŘENÝCH MODULŮ ---
 
         const generateConfigHtml = (items, type) => {
-             // Generuje přepínače nebo checkboxy pro různé konfigurace
              return items.map((item, index) => {
                 const control = type === 'scan' || type === 'identity' 
                     ? `<input type="checkbox" id="${type}-${index}" ${item.defaultChecked ? 'checked' : ''}>`
@@ -542,6 +694,14 @@
                     </div>
                 `;
              }).join('');
+        };
+        
+        // OPRAVENO: Přidána funkce pro generování obsahu Cyber Defense (chyběla v plné verzi v8.0)
+        const generateCyberDefenseHtml = () => {
+             return `<p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany.</p>
+                     <div class="config-group">
+                        ${generateConfigHtml(SIMULATION_DATA.CYBER_DEFENSE_FEATURES, 'cyber')}
+                     </div>`;
         };
         
         const generateVpnServerHtml = () => {
@@ -653,12 +813,7 @@
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Pro skenování celého systému je vyžadována **PRO licence**.</p>`
                 },
                 'cyber_defense': {
-                    proHtml: `
-                        <p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany.</p>
-                        <div class="config-group">
-                           ${generateConfigHtml(SIMULATION_DATA.CYBER_DEFENSE_FEATURES, 'cyber')}
-                        </div>
-                    `,
+                    proHtml: generateCyberDefenseHtml(), // Nyní volá OPRAVENOU funkci
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
                 },
                 'vpn': {
@@ -739,7 +894,7 @@
             
             // 3. Nastavení Dashboardu a funkčnosti
             setPaysafeModuleContent(); 
-            setDashboardContent(licenseType);
+            setDashboardContent(licenseType); // OPRAVENO: Volá funkci, která nyní má tělo
             makeFunctional(isPro);
 
             if (message) alert(message);
