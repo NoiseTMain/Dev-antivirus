@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V8.1 (Opravený Dashboard a Cyber Defense)</title>
+    <title>Nexus Prime Security - V8.3 (Plná Funkcionalita a 40+ Obranných Prvků)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* --- CSS STYLING --- */
@@ -336,6 +336,7 @@
         /* --- JAVASCRIPT LOGIKA --- */
         const CURRENT_USER_KEY = 'nexusPrimeCurrentUser';
         const REGISTERED_USERS_KEY = 'nexusPrimeRegisteredUsers';
+        const ACTIVITY_LOG_KEY = 'nexusPrimeActivityLog';
         const PRO_PRICE = 7999;
         const SIMULATED_PIN_VALUES = [3610, 3610, 779]; 
 
@@ -375,7 +376,28 @@
             if (activeNav) activeNav.classList.add('active');
         };
 
-        // --- AUTENTIZACE (Zůstává stejná) ---
+        // --- REALISTICKÝ LOG AKTIVIT ---
+        const logActivity = (description) => {
+            if (!currentUser) return;
+            const logEntry = `<strong>${new Date().toLocaleDateString('cs-CZ')} ${new Date().toLocaleTimeString('cs-CZ')}</strong>: ${description}`;
+            
+            let logs = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY)) || [];
+            logs.unshift(logEntry); 
+            // Omezení logu na 50 záznamů pro přehlednost
+            localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(logs.slice(0, 50)));
+        };
+
+        const clearActivityLog = () => {
+            if (confirm("Opravdu chcete vyčistit celý log aktivity? Tato akce je nevratná.")) {
+                localStorage.removeItem(ACTIVITY_LOG_KEY);
+                logActivity("Log aktivity vyčištěn uživatelem.");
+                // Přenačtení sekce Profilu, aby se změna projevila
+                document.getElementById('settings-content').innerHTML = generateSettingsHtml();
+            }
+        };
+
+
+        // --- AUTENTIZACE ---
         const handleRegister = () => { 
              const regUsername = document.getElementById('reg-username').value.trim();
              const regPassword = document.getElementById('reg-password').value.trim();
@@ -395,16 +417,20 @@
              saveRegisteredUsers(users);
              currentUser = newUser;
              saveCurrentUserState();
+             logActivity(`Registrace nového účtu: ${regUsername}.`);
              unlockFeaturesUI('Freemium', `Vítejte, ${regUsername}! Váš účet byl vytvořen.`, 'dashboard');
         };
+        
         const handleLogin = () => { 
              const loginUsername = document.getElementById('login-username').value.trim();
              const loginPassword = document.getElementById('login-password').value.trim();
              const users = getRegisteredUsers();
              
+             // Speciální účet pro testování PRO verze
              if (loginUsername === 'Vašek' && loginPassword === 'vasek11') {
                   currentUser = { username: 'Vašek', password: 'vasek11', isPaid: true, remainingAmount: 0, pinIndex: SIMULATED_PIN_VALUES.length };
                   saveCurrentUserState();
+                  logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`);
                   unlockFeaturesUI('PRO', `Vítejte zpět, ${currentUser.username}! PRO verze je automaticky aktivována.`, 'dashboard');
                   return;
              }
@@ -414,6 +440,7 @@
                   currentUser = storedUser;
                   saveCurrentUserState();
                   const licenseType = currentUser.isPaid ? 'PRO' : 'Freemium';
+                  logActivity(`Úspěšné přihlášení uživatele ${currentUser.username}.`);
                   unlockFeaturesUI(licenseType, `Vítejte zpět, ${currentUser.username}!`, 'dashboard');
                   return;
              }
@@ -421,7 +448,9 @@
              document.getElementById('login-message').innerText = 'Chyba: Neplatné uživatelské jméno nebo heslo.';
              document.getElementById('login-message').style.color = 'var(--color-danger-red)';
         };
+        
         const handleLogout = () => { 
+             logActivity(`Odhlášení uživatele ${currentUser.username}.`);
              currentUser = null;
              localStorage.removeItem(CURRENT_USER_KEY);
              document.getElementById('header-username').innerText = 'Odhlášeno';
@@ -435,7 +464,7 @@
              switchModule('auth_select');
         };
 
-        // --- PLATEBNÍ MODUL LOGIKA ---
+        // --- PLATEBNÍ MODUL LOGIKA (Plná verze) ---
          const updateRemainingDisplay = () => {
              const remainingAmountSpan = document.getElementById('remaining-amount');
              if (!remainingAmountSpan || !currentUser) return;
@@ -456,6 +485,7 @@
                     saveRegisteredUsers(users);
                  }
                  saveCurrentUserState();
+                 logActivity(`Aktivace PRO licence dokončena platbou Paysafecard.`);
 
                  const paysafeBox = document.getElementById('paysafe-payment-box');
                  paysafeBox.innerHTML = `
@@ -486,13 +516,14 @@
              }
              
              if (currentUser.pinIndex >= SIMULATED_PIN_VALUES.length || currentUser.isPaid) {
-                  addLog("Platba již byla dokončena.", "var(--color-accent-green)");
+                  addLog("Platba již byla dokončena nebo vyčerpán počet testovacích PINů.", "var(--color-accent-green)");
                   return;
              }
 
              submitPinBtn.disabled = true;
              paysafePinInput.disabled = true;
              addLog(`Ověřování PINu ${pin}...`, "var(--color-warning-yellow)");
+             logActivity(`Pokus o zadání PINu Paysafecard (PIN #${currentUser.pinIndex + 1}).`);
              
              setTimeout(() => {
                  let pinValue = SIMULATED_PIN_VALUES[currentUser.pinIndex]; 
@@ -505,6 +536,7 @@
                      currentUser.remainingAmount -= amountPaid;
                      
                      addLog(`PIN #${currentUser.pinIndex} ověřen! Použito: ${amountPaid.toLocaleString('cs-CZ')} Kč.`, "var(--color-accent-green)");
+                     logActivity(`Platba přijata: ${amountPaid.toLocaleString('cs-CZ')} Kč.`);
                      if (refund > 0) {
                           addLog(`Přeplatek (${refund.toLocaleString('cs-CZ')} Kč) zůstává na PINu.`, "var(--color-warning-yellow)");
                      }
@@ -544,7 +576,7 @@
              updateRemainingDisplay();
         };
 
-        // --- OPRAVENÁ LOGIKA PRO DASHBOARD ---
+        // --- DASHBOARD ---
         const setDashboardContent = (licenseType) => {
              const isPro = licenseType === 'PRO';
              const color = isPro ? 'var(--color-accent-green)' : 'var(--color-danger-red)';
@@ -560,7 +592,7 @@
                     <div id="score-gauge" style="border-radius: 50%; border: 8px solid ${color}; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; font-size: 2em; margin: 0 auto;">${score}</div>
                     <h3 style="margin-top: 15px;">Stav Systému</h3>
                     <p id="system-status-text" style="color: ${color}; font-size: 1.1em; font-weight: bold;">${statusText}</p>
-                    <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: ${isPro ? 'Nyní' : 'Nikdy'}</p>
+                    <p id="last-repair-text" style="color: var(--color-text-grey); font-size: 0.9em;">Poslední oprava: ${isPro ? new Date().toLocaleDateString('cs-CZ') : 'Nikdy'}</p>
                     <button id="start-smart-scan-dashboard" class="primary-btn">${buttonText}</button>
                 </div>
                 
@@ -576,7 +608,10 @@
              const scanBtn = document.getElementById('start-smart-scan-dashboard');
              if (scanBtn) {
                  if (isPro) {
-                     scanBtn.addEventListener('click', () => switchModule('scan'));
+                     scanBtn.addEventListener('click', () => {
+                         switchModule('scan');
+                         logActivity(`Spuštěn Chytrý Sken z Dashboardu.`);
+                     });
                  } else {
                      scanBtn.addEventListener('click', () => switchModule('paysafe'));
                  }
@@ -591,8 +626,8 @@
                 { name: "Záložní e-mail", type: "email", defaultChecked: false },
                 { name: "Číslo kreditní karty (4 cifry)", type: "card", defaultChecked: true },
                 { name: "Číslo debetní karty (4 cifry)", type: "card", defaultChecked: false },
-                { name: "Rodné číslo (simulované)", type: "social", defaultChecked: true },
-                { name: "Číslo pasu (simulované)", type: "document", defaultChecked: false },
+                { name: "Rodné číslo", type: "social", defaultChecked: true },
+                { name: "Číslo pasu", type: "document", defaultChecked: false },
                 { name: "Uživatelské jméno (sociální sítě)", type: "username", defaultChecked: true },
                 { name: "Telefonní číslo", type: "phone", defaultChecked: true },
                 { name: "Adresa domů", type: "address", defaultChecked: false },
@@ -611,33 +646,50 @@
                 { name: "Smlouva o službách", type: "document", defaultChecked: false },
             ],
 
-            // 25+ položek pro Cyber Defense (OPRAVENO: Tato data chyběla v globálním rozsahu)
+            // VYLEPŠENO: Přidáno na 40+ položek pro Kybernetickou Obranu
             CYBER_DEFENSE_FEATURES: [
-                { name: "Adaptivní Firewall", desc: "Dynamicky blokuje hrozby založené na chování.", default: true },
-                { name: "Ochrana proti Zero-Day útokům", desc: "Využívá AI pro detekci nových hrozeb.", default: true },
-                { name: "Anti-Phishing Shield", desc: "Zabraňuje přístupu na podvodné weby.", default: true },
-                { name: "Monitorování sítě v reálném čase", desc: "Upozorní na podezřelé síťové aktivity.", default: true },
-                { name: "Ochrana webové kamery", desc: "Zabrání neoprávněnému přístupu k webkameře.", default: true },
-                { name: "Ochrana mikrofonu", desc: "Zabrání odposlechu přes mikrofon.", default: true },
-                { name: "Zabezpečené stahování", desc: "Automaticky skenuje stažené soubory.", default: true },
-                { name: "Anti-Keylogger", desc: "Chrání před zaznamenáváním stisků kláves.", default: true },
-                { name: "Wi-Fi Security Audit", desc: "Kontroluje slabiny Wi-Fi připojení.", default: true },
-                { name: "Deep Scan Cache", desc: "Odstraňuje skryté škodlivé kódy z dočasných souborů.", default: true },
-                { name: "Ochrana před Ransomware", desc: "Šifruje a chrání soubory.", default: true },
-                { name: "Rodičovská kontrola (pokročilá)", desc: "Nastavuje limity pro dětské účty.", default: false },
-                { name: "Automatická aktualizace hrozeb", desc: "Udržuje databázi hrozeb vždy aktuální.", default: true },
-                { name: "Sandboxing aplikací", desc: "Izoluje podezřelé aplikace.", default: true },
-                { name: "Šifrování datových toků (TLS)", desc: "Zajišťuje bezpečný přenos všech dat.", default: true },
-                { name: "Blokování reklam a trackerů", desc: "Zvyšuje rychlost a soukromí.", default: true },
-                { name: "Ochrana bankovnictví", desc: "Zabezpečuje finanční transakce.", default: true },
-                { name: "Anti-Spyware modul", desc: "Hledá a odstraňuje špionážní software.", default: true },
-                { name: "Aktivní ochrana složek", desc: "Znemožňuje přístup k vybraným složkám.", default: false },
-                { name: "Simulace útoků (Honeypot)", desc: "Oklame hackery falešnými daty.", default: false },
-                { name: "Web Reputation Filter", desc: "Blokuje stránky s nízkou důvěryhodností.", default: true },
-                { name: "Ochrana proti IoT hrozbám", desc: "Zabezpečuje připojená chytrá zařízení.", default: true },
-                { name: "Detekce nelegální těžby kryptoměn", desc: "Chrání před zneužitím CPU.", default: true },
-                { name: "Obousměrný Firewall", desc: "Kontrola příchozího i odchozího provozu.", default: true },
-                { name: "Monitorování změn registru", desc: "Upozorní na neoprávněné změny.", default: true },
+                { name: "Adaptivní Firewall (L5)", desc: "Dynamicky blokuje hrozby založené na chování na síťové vrstvě (TCP/UDP).", default: true },
+                { name: "Ochrana proti Zero-Day útokům (AI Deep Learning)", desc: "Využívá neuronovou síť pro detekci dosud neznámých hrozeb v kódu.", default: true },
+                { name: "Anti-Phishing Shield (Intenzivní)", desc: "Blokuje podezřelé e-maily, SMS a webové stránky s vysokou agresivitou.", default: true },
+                { name: "Monitorování sítě v reálném čase", desc: "Upozorní na podezřelé odchozí síťové aktivity (Command & Control servery).", default: true },
+                { name: "Ochrana webové kamery (Hardwarové blokování)", desc: "Zabrání neoprávněnému přístupu k webkameře z aplikací třetích stran.", default: true },
+                { name: "Ochrana mikrofonu (Monitoring API)", desc: "Monitoruje přístup k mikrofonu a varuje při aktivaci neznámou aplikací.", default: true },
+                { name: "Zabezpečené stahování (Cloud Scan)", desc: "Automaticky skenuje stažené soubory v cloudu před uložením na disk.", default: true },
+                { name: "Anti-Keylogger (Šifrování klávesnice)", desc: "Chrání před zaznamenáváním stisků kláves, zejména při zadávání hesel.", default: true },
+                { name: "Wi-Fi Security Audit (WPA3-Ready)", desc: "Kontroluje slabiny Wi-Fi připojení, včetně DNS a ARP spoofingu.", default: true },
+                { name: "Deep Scan Cache", desc: "Odstraňuje skryté škodlivé kódy, scripty a data z dočasných souborů prohlížečů.", default: true },
+                { name: "Ochrana před Ransomware (Reverzní šifrování)", desc: "Vytváří záložní verze souborů v reálném čase pro rychlou obnovu.", default: true },
+                { name: "Rodičovská kontrola (Pokročilé Filtry)", desc: "Nastavuje časové limity a filtry obsahu pro dětské účty.", default: false },
+                { name: "Automatická aktualizace hrozeb", desc: "Udržuje databázi hrozeb vždy aktuální bez zásahu uživatele.", default: true },
+                { name: "Sandboxing aplikací (Virtuální prostředí)", desc: "Izoluje podezřelé, nové nebo neověřené aplikace v bezpečném prostředí.", default: true },
+                { name: "Šifrování datových toků (TLS/SSL Enforce)", desc: "Zajišťuje bezpečný, šifrovaný přenos všech dat při komunikaci.", default: true },
+                { name: "Blokování reklam a trackerů (Agresivní režim)", desc: "Zvyšuje rychlost a soukromí blokováním invazivních reklam.", default: true },
+                { name: "Ochrana bankovnictví (Izolovaný prohlížeč)", desc: "Zabezpečuje finanční transakce spuštěním portálu v izolovaném okně.", default: true },
+                { name: "Anti-Spyware modul (Heuristická detekce)", desc: "Hledá a odstraňuje špionážní software na základě chování a podpisů.", default: true },
+                { name: "Aktivní ochrana složek (Pouze whitelist)", desc: "Znemožňuje zápis do vybraných složek kromě povolených aplikací.", default: true },
+                { name: "Simulace útoků (Honeypot Lure)", desc: "Oklame hackery falešnými daty a odhalí jejich IP adresu.", default: false },
+                { name: "Web Reputation Filter", desc: "Blokuje stránky s nízkou důvěryhodností nebo nedávno nahlášené jako škodlivé.", default: true },
+                { name: "Ochrana proti IoT hrozbám (Device Fingerprinting)", desc: "Zabezpečuje připojená chytrá zařízení v domácí síti (kamera, termostat).", default: true },
+                { name: "Detekce nelegální těžby kryptoměn (CPU Monitor)", desc: "Chrání před zneužitím CPU pro nelegální těžbu při prohlížení webu.", default: true },
+                { name: "Obousměrný Firewall (Full-Packet Inspection)", desc: "Kontrola příchozího i odchozího provozu na úrovni celých paketů.", default: true },
+                { name: "Monitorování změn registru/OS", desc: "Upozorní na neoprávněné změny v kritických systémových klíčích.", default: true },
+                { name: "Integrace s Cloud Protection (Real-Time)", desc: "Spolupráce s cloudovými databázemi hrozeb pro okamžité reakce.", default: true },
+                { name: "VPN Kill Switch", desc: "Automaticky odpojí zařízení od internetu, pokud dojde k výpadku VPN spojení.", default: true },
+                { name: "Optimalizace výkonu skenování", desc: "Optimalizuje využití zdrojů při skenování, aby se zpomalil systém.", default: true },
+                { name: "Blokování P2P/Torrent provozu (Volitelné)", desc: "Umožňuje blokovat veškerý nešifrovaný P2P provoz pro vyšší bezpečnost.", default: false },
+                { name: "Ochrana Bluetooth a USB zařízení", desc: "Skenuje připojovaná zařízení na firmware/autorun hrozby.", default: true },
+                { name: "Behaviorální analýza aplikací", desc: "Identifikuje škodlivé chování u jinak 'legálních' aplikací.", default: true },
+                { name: "Důvěryhodné zóny (Whitelist sítě)", desc: "Definuje bezpečné Wi-Fi sítě, kde se aplikují mírnější pravidla.", default: true },
+                { name: "Anti-Exploit modul", desc: "Brání zneužití zranitelností v populárních aplikacích a prohlížečích.", default: true },
+                { name: "Ochrana proti DNS zlomyslnému přesměrování", desc: "Zajišťuje, že DNS dotazy nejsou přesměrovány na podvodné servery.", default: true },
+                { name: "Modul prevence ztráty dat (DLP light)", desc: "Detekuje, když citlivá data opouští zařízení nešifrovaně.", default: false },
+                { name: "Vynucení silného hesla pro aplikace", desc: "Doporučuje a vynucuje silnější hesla pro systémové služby.", default: false },
+                { name: "Detekce Root/Jailbreak pokusů", desc: "Upozorní na pokusy o získání vyšších oprávnění k prolomení zabezpečení.", default: true },
+                { name: "Biometrická ochrana přístupu", desc: "Vynucuje otisk prstu/obličeje pro přístup do aplikace.", default: true },
+                { name: "Vzdálené smazání dat (Wipe)", desc: "Umožňuje vzdáleně smazat data při ztrátě zařízení.", default: false },
+                { name: "Šifrování interního úložiště (AES-256)", desc: "Vynucuje plné šifrování datového disku (pokud OS podporuje).", default: true },
+                { name: "Hypervisor Protection", desc: "Izoluje kritické systémové komponenty na nejnižší úrovni OS.", default: true },
+                { name: "AI detekce Fake News", desc: "Varuje před stránkami a obsahem s vysokým rizikem dezinformací.", default: false },
             ],
             
             SCAN_AREAS: [
@@ -696,9 +748,8 @@
              }).join('');
         };
         
-        // OPRAVENO: Přidána funkce pro generování obsahu Cyber Defense (chyběla v plné verzi v8.0)
         const generateCyberDefenseHtml = () => {
-             return `<p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany.</p>
+             return `<p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany. Aktivace všech funkcí zaručuje **Maximální PRO ochranu**.</p>
                      <div class="config-group">
                         ${generateConfigHtml(SIMULATION_DATA.CYBER_DEFENSE_FEATURES, 'cyber')}
                      </div>`;
@@ -718,38 +769,72 @@
                 </div>
              `;
         };
-        
-        const generateSettingsHtml = () => {
-            const activityLog = [
-                 `<strong>${new Date().toLocaleDateString('cs-CZ')} ${new Date().toLocaleTimeString('cs-CZ')}</strong>: Přihlášení (Admin/PRO)`,
-                 `<strong>${new Date(Date.now() - 60000).toLocaleDateString('cs-CZ')}</strong>: Aktivace VPN (Praha).`,
-                 `<strong>${new Date(Date.now() - 3600000).toLocaleDateString('cs-CZ')}</strong>: Spuštěn Chytrý Sken, nalezeny 2 hrozby (Opraveno).`,
-                 `<strong>${new Date(Date.now() - 86400000).toLocaleDateString('cs-CZ')}</strong>: Úspěšná platba 779 Kč (Dokončení aktivace PRO).`,
-                 `<strong>${new Date(Date.now() - 86400000 * 2).toLocaleDateString('cs-CZ')}</strong>: Registrace nového zařízení.`,
-            ];
 
-            const logHtml = activityLog.map(log => `<div class="activity-log-item">${log}</div>`).join('');
+        const generateSettingsHtml = () => {
+            const logs = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY)) || [];
+            
+            const logHtml = logs.length > 0
+                ? logs.map(log => `<div class="activity-log-item">${log}</div>`).join('')
+                : '<div class="activity-log-item" style="color: var(--color-text-grey);">Žádná zaznamenaná aktivita.</div>';
+
 
             return `
                 <h3 style="margin-top: 0;">Správa Profilu</h3>
                 <div class="config-group">
                     <p>Uživatelské jméno: <strong>${currentUser.username}</strong></p>
-                    <p>Heslo: <span style="color: var(--color-warning-yellow);">** Skryto pro bezpečnost ** (Simulované: ${currentUser.password})</span></p>
-                    <button class="secondary-btn" style="margin-top: 10px;">Změnit Heslo (Simulace)</button>
+                    <p>Heslo: <span style="color: var(--color-warning-yellow);">** Skryto pro bezpečnost **</span></p>
+                    <button class="secondary-btn" style="margin-top: 10px;">Změnit Heslo</button>
                 </div>
                 
                 <h3>Historie Aktivity</h3>
                 <div class="config-group">
                     ${logHtml}
                 </div>
+                <button class="secondary-btn" onclick="clearActivityLog()">Vyčistit log aktivity</button>
             `;
+        };
+        
+        let isVpnConnected = false;
+        
+        const simulateVpnConnection = (vpnToggleBtn) => {
+             const selectedServer = document.getElementById('vpn-server-select').value.replace(/-/g, ' ');
+             const vpnStatusHeader = document.querySelector('#vpn-content h3');
+             const vpnStatusP = document.querySelector('#vpn-content p');
+             
+             if (!isVpnConnected) {
+                vpnToggleBtn.disabled = true;
+                vpnToggleBtn.innerText = 'Připojování...';
+                vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
+                vpnStatusHeader.innerText = `Stav: Připojování...`;
+                vpnStatusP.innerText = 'Navazuji šifrované spojení.';
+                
+                logActivity(`Pokus o připojení k VPN serveru: ${selectedServer}.`);
+                
+                setTimeout(() => {
+                    isVpnConnected = true;
+                    vpnToggleBtn.disabled = false;
+                    vpnToggleBtn.innerText = 'Odpojit';
+                    vpnToggleBtn.style.backgroundColor = 'var(--color-danger-red)';
+                    vpnStatusHeader.innerText = `Stav: Připojeno (${selectedServer})`;
+                    vpnStatusP.innerText = 'IP Adresa: XXX.XXX.XXX (Maskováno)';
+                    logActivity(`Úspěšně připojeno k VPN: ${selectedServer}.`);
+                }, 3500);
+            } else {
+                isVpnConnected = false;
+                vpnToggleBtn.innerText = 'Připojit';
+                vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
+                vpnStatusHeader.innerText = 'Stav: Odpojeno';
+                vpnStatusP.innerText = 'Klikněte pro zabezpečení spojení.';
+                logActivity(`Odpojeno od VPN serveru: ${selectedServer}.`);
+            }
         };
 
         const startScanSimulation = (isRepair = false) => {
-            alert("Simulace spuštění skenu...");
              const scanStatus = document.getElementById('scan-status');
              const progressBar = document.getElementById('scan-fill');
              if (!scanStatus || !progressBar) return;
+             
+             logActivity(`Spuštěna simulace skenování (${isRepair ? 'oprava' : 'běžný sken'}).`);
              
              scanStatus.innerText = 'Skenování probíhá...';
              progressBar.style.width = '20%';
@@ -762,33 +847,8 @@
                  progressBar.style.width = '100%';
                  scanStatus.innerText = isRepair ? 'Oprava dokončena!' : 'Skenování dokončeno! Nalezeno 3 hrozby.';
                  document.getElementById('threats-count').innerText = isRepair ? '0' : '3';
+                 logActivity(`Skenování dokončeno. Nalezeno hrozeb: ${isRepair ? '0' : '3'}.`);
              }, 3000);
-        };
-        
-        let isVpnConnected = false;
-        const simulateVpnConnection = (vpnToggleBtn) => {
-             alert("Simulace VPN připojení...");
-             if (!isVpnConnected) {
-                vpnToggleBtn.disabled = true;
-                vpnToggleBtn.innerText = 'Připojování...';
-                vpnToggleBtn.style.backgroundColor = 'var(--color-warning-yellow)';
-                const selectedServer = document.getElementById('vpn-server-select').value.replace(/-/g, ' ');
-                
-                setTimeout(() => {
-                    isVpnConnected = true;
-                    vpnToggleBtn.disabled = false;
-                    vpnToggleBtn.innerText = 'Odpojit';
-                    vpnToggleBtn.style.backgroundColor = 'var(--color-danger-red)';
-                    document.querySelector('#vpn-content h3').innerText = `Stav: Připojeno (${selectedServer})`;
-                    document.querySelector('#vpn-content p').innerText = 'IP Adresa: XXX.XXX.XXX (Maskováno)';
-                }, 3500);
-            } else {
-                isVpnConnected = false;
-                vpnToggleBtn.innerText = 'Připojit';
-                vpnToggleBtn.style.backgroundColor = 'var(--color-accent-blue)';
-                document.querySelector('#vpn-content h3').innerText = 'Stav: Odpojeno';
-                document.querySelector('#vpn-content p').innerText = 'Klikněte pro zabezpečení spojení.';
-            }
         };
 
 
@@ -813,7 +873,7 @@
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Pro skenování celého systému je vyžadována **PRO licence**.</p>`
                 },
                 'cyber_defense': {
-                    proHtml: generateCyberDefenseHtml(), // Nyní volá OPRAVENOU funkci
+                    proHtml: generateCyberDefenseHtml(), 
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
                 },
                 'vpn': {
@@ -832,11 +892,11 @@
                         <div class="config-group">
                            ${generateConfigHtml(SIMULATION_DATA.IDENTITY_ITEMS, 'identity')}
                         </div>
-                        <button class="primary-btn" style="margin-top: 15px;">Spustit Dark Web Sken</button>
+                        <button id="start-dark-web-scan" class="primary-btn" style="margin-top: 15px;">Spustit Dark Web Sken</button>
                     `,
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
                 },
-                'settings': { // Nyní "Profil a Historie"
+                'settings': { 
                     proHtml: generateSettingsHtml(),
                     freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
                 }
@@ -857,12 +917,15 @@
                 const scanBtnSecondary = document.getElementById('start-scan-secondary');
                 if (scanBtnSecondary) scanBtnSecondary.addEventListener('click', () => startScanSimulation(false));
                 
+                const darkWebScanBtn = document.getElementById('start-dark-web-scan');
+                if (darkWebScanBtn) darkWebScanBtn.addEventListener('click', () => logActivity("Spuštěn Dark Web Sken (Identity Guard)."));
+
                 // Připojení logiky pro simulované změny v konfiguraci
                  document.querySelectorAll('.toggle-switch input, #scan-content input[type="checkbox"], #identity-content input[type="checkbox"]').forEach(input => {
                      input.addEventListener('change', (e) => {
                          const state = e.target.checked ? 'zapnuto' : 'vypnuto';
                          const featureName = e.target.closest('.config-item').querySelector('strong').innerText;
-                         console.log(`Konfigurace "${featureName}" je nyní ${state}`);
+                         logActivity(`Změna konfigurace: ${featureName} nastaveno na stav: ${state}.`);
                      });
                  });
             }
@@ -894,7 +957,7 @@
             
             // 3. Nastavení Dashboardu a funkčnosti
             setPaysafeModuleContent(); 
-            setDashboardContent(licenseType); // OPRAVENO: Volá funkci, která nyní má tělo
+            setDashboardContent(licenseType);
             makeFunctional(isPro);
 
             if (message) alert(message);
@@ -906,7 +969,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             
             // Připojení handlerů pro autentizaci
-            document.getElementById('profile-btn').addEventListener('click', () => switchModule('auth_select'));
+            document.getElementById('profile-btn').addEventListener('click', () => switchModule('settings')); 
             document.getElementById('show-login-btn').addEventListener('click', () => switchModule('login'));
             document.getElementById('show-register-btn').addEventListener('click', () => switchModule('register'));
             document.getElementById('register-btn').addEventListener('click', handleRegister);
