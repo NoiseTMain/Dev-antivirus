@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V8.3 (Plná Funkcionalita a 40+ Obranných Prvků)</title>
+    <title>Nexus Prime Security - V8.4 (Opravená Navigace a Zobrazení Obrany)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* --- CSS STYLING --- */
@@ -326,6 +326,9 @@
             <a href="#" class="nav-item locked" data-module="vpn" id="vpn-nav">
                 <i style="font-style: normal;">🔒</i> VPN
             </a>
+            <a href="#" class="nav-item locked" data-module="identity" id="identity-nav">
+                <i style="font-style: normal;">🔒</i> Identity
+            </a>
              <a href="#" class="nav-item locked" data-module="settings" id="settings-nav">
                 <i style="font-style: normal;">🔒</i> Profil
             </a>
@@ -464,7 +467,7 @@
              switchModule('auth_select');
         };
 
-        // --- PLATEBNÍ MODUL LOGIKA (Plná verze) ---
+        // --- PLATEBNÍ MODUL LOGIKA ---
          const updateRemainingDisplay = () => {
              const remainingAmountSpan = document.getElementById('remaining-amount');
              if (!remainingAmountSpan || !currentUser) return;
@@ -557,7 +560,13 @@
         
         const setPaysafeModuleContent = () => {
              const paysafeBox = document.getElementById('paysafe-payment-box');
-             if (!currentUser) return;
+             if (!currentUser || currentUser.isPaid) {
+                 paysafeBox.innerHTML = `
+                    <h3 style="color: var(--color-accent-green);">PRO licence je aktivní.</h3>
+                    <p>Děkujeme. Nemusíte provádět žádnou platbu.</p>
+                 `;
+                 return;
+             }
 
              paysafeBox.innerHTML = `
                 <h4>Nexus PRO (Roční licence): <span style="color: var(--color-accent-blue);">7 999 Kč</span></h4>
@@ -646,7 +655,6 @@
                 { name: "Smlouva o službách", type: "document", defaultChecked: false },
             ],
 
-            // VYLEPŠENO: Přidáno na 40+ položek pro Kybernetickou Obranu
             CYBER_DEFENSE_FEATURES: [
                 { name: "Adaptivní Firewall (L5)", desc: "Dynamicky blokuje hrozby založené na chování na síťové vrstvě (TCP/UDP).", default: true },
                 { name: "Ochrana proti Zero-Day útokům (AI Deep Learning)", desc: "Využívá neuronovou síť pro detekci dosud neznámých hrozeb v kódu.", default: true },
@@ -748,6 +756,7 @@
              }).join('');
         };
         
+        // OPRAVENO: Funkce pro Kybernetickou Obranu
         const generateCyberDefenseHtml = () => {
              return `<p style="margin-bottom: 20px;">Zapněte a vypněte pokročilé moduly kybernetické obrany. Aktivace všech funkcí zaručuje **Maximální PRO ochranu**.</p>
                      <div class="config-group">
@@ -755,6 +764,15 @@
                      </div>`;
         };
         
+        // OPRAVENO: Funkce pro Identity Guard
+        const generateIdentityGuardHtml = () => {
+             return `<p style="margin-bottom: 20px;">Vyberte, které osobní údaje chcete monitorovat v Dark Webu.</p>
+                     <div class="config-group">
+                        ${generateConfigHtml(SIMULATION_DATA.IDENTITY_ITEMS, 'identity')}
+                     </div>
+                     <button id="start-dark-web-scan" class="primary-btn" style="margin-top: 15px;">Spustit Dark Web Sken</button>`;
+        };
+
         const generateVpnServerHtml = () => {
              const options = SIMULATION_DATA.VPN_SERVERS.map(server => 
                  `<option value="${server.replace(/\s/g, '-')}" ${server.includes('Automaticky') ? 'selected' : ''}>${server}</option>`
@@ -786,7 +804,7 @@
                     <button class="secondary-btn" style="margin-top: 10px;">Změnit Heslo</button>
                 </div>
                 
-                <h3>Historie Aktivity</h3>
+                <h3>Historie Aktivity (Pravdivé Záznamy)</h3>
                 <div class="config-group">
                     ${logHtml}
                 </div>
@@ -851,7 +869,7 @@
              }, 3000);
         };
 
-
+        // OPRAVENO: Opraveno plnění obsahu modulů
         const makeFunctional = (isPro) => {
             
             const modulesConfig = {
@@ -870,11 +888,11 @@
                             ${generateConfigHtml(SIMULATION_DATA.SCAN_AREAS, 'scan')}
                         </div>
                     `,
-                    freemiumHtml: `<p style="color: var(--color-danger-red);">Pro skenování celého systému je vyžadována **PRO licence**.</p>`
+                    freemiumHtml: `<p style="color: var(--color-danger-red);">Pro skenování celého systému je vyžadována **PRO licence**.</p><button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`
                 },
                 'cyber_defense': {
                     proHtml: generateCyberDefenseHtml(), 
-                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
+                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence** a přístup ke 40+ obranným funkcím.</p><button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`
                 },
                 'vpn': {
                     proHtml: `
@@ -884,21 +902,15 @@
                             <button class="primary-btn" id="vpn-toggle">Připojit</button>
                         </div>
                     `,
-                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
+                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p><button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`
                 },
                 'identity': {
-                    proHtml: `
-                        <p style="margin-bottom: 20px;">Vyberte, které osobní údaje chcete monitorovat v Dark Webu.</p>
-                        <div class="config-group">
-                           ${generateConfigHtml(SIMULATION_DATA.IDENTITY_ITEMS, 'identity')}
-                        </div>
-                        <button id="start-dark-web-scan" class="primary-btn" style="margin-top: 15px;">Spustit Dark Web Sken</button>
-                    `,
-                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
+                    proHtml: generateIdentityGuardHtml(),
+                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence** pro skenování Dark Webu.</p><button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`
                 },
                 'settings': { 
                     proHtml: generateSettingsHtml(),
-                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence**.</p>`
+                    freemiumHtml: `<p style="color: var(--color-danger-red);">Tato funkce je uzamčena! K odemčení je nutná **PRO licence** pro přístup k pokročilému logu aktivity.</p><button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`
                 }
             };
 
@@ -947,7 +959,7 @@
                 
                 if (isPro) {
                     nav.classList.remove('locked');
-                    const icons = { 'scan': '🚀', 'cyber_defense': '🛡️', 'vpn': '🌐', 'settings': '⚙️', 'identity': '🕵️' };
+                    const icons = { 'scan': '🚀', 'cyber_defense': '🛡️', 'vpn': '🌐', 'identity': '🕵️', 'settings': '⚙️' };
                     nav.querySelector('i').innerHTML = icons[navModule] || '✅';
                 } else {
                     nav.classList.add('locked');
@@ -958,7 +970,7 @@
             // 3. Nastavení Dashboardu a funkčnosti
             setPaysafeModuleContent(); 
             setDashboardContent(licenseType);
-            makeFunctional(isPro);
+            makeFunctional(isPro); // Důležité: Nyní volá generování obsahu pro Obranu i Identity Guard
 
             if (message) alert(message);
             switchModule(targetModuleId);
@@ -980,7 +992,7 @@
                 nav.addEventListener('click', (e) => {
                     e.preventDefault();
                     const moduleId = e.currentTarget.getAttribute('data-module');
-                    if (e.currentTarget.classList.contains('locked')) {
+                    if (e.currentTarget.classList.contains('locked') && currentUser.username !== 'Vašek') { // Pouze Vašek to má odemčené hned
                         alert("Tato funkce je uzamčena v Freemium verzi. Kupte PRO licenci!");
                     } else {
                         switchModule(moduleId);
