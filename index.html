@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Prime Security - V8.6 (Odebrána Obrana, Upraven Identity)</title>
+    <title>Nexus Prime Security - V8.7 (Expirace Licence)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* --- CSS STYLING --- */
@@ -354,6 +354,14 @@
 
         let currentUser = null;
         
+        // --- NOVÁ UTILITY FUNKCE PRO VÝPOČET EXSPIRACE ---
+        const calculateExpirationDate = () => {
+            const today = new Date();
+            today.setFullYear(today.getFullYear() + 1);
+            // Vrátí datum v českém formátu (např. 27. 11. 2026)
+            return today.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'numeric', day: 'numeric' });
+        };
+        
         // --- POMOCNÉ FUNKCE A TRVALOST DAT ---
         const getRegisteredUsers = () => { return JSON.parse(localStorage.getItem(REGISTERED_USERS_KEY)) || {}; };
         const saveRegisteredUsers = (users) => { localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users)); };
@@ -368,9 +376,11 @@
                  currentUser = {
                      ...fullUser,
                      isPaid: storedUser.username === 'Vašek' ? true : fullUser.isPaid || false,
-                     remainingAmount: storedUser.username === 'Vašek' ? 0 : storedUser.remainingAmount || PRO_PRICE,
-                     pinIndex: storedUser.username === 'Vašek' ? SIMULATED_PIN_VALUES.length : storedUser.pinIndex || 0,
-                     password: fullUser.password || 'vasek11' 
+                     remainingAmount: storedUser.username === 'Vašek' ? 0 : fullUser.remainingAmount || PRO_PRICE,
+                     pinIndex: storedUser.username === 'Vašek' ? SIMULATED_PIN_VALUES.length : fullUser.pinIndex || 0,
+                     password: fullUser.password || 'vasek11',
+                     // NOVÉ: Načtení data expirace
+                     license_expiration_date: fullUser.license_expiration_date || storedUser.license_expiration_date || null 
                  };
                  return true;
              }
@@ -424,7 +434,8 @@
                   return;
              }
              
-             const newUser = { username: regUsername, password: regPassword, isPaid: false, remainingAmount: PRO_PRICE, pinIndex: 0 };
+             // NEW: license_expiration_date je null pro Freemium
+             const newUser = { username: regUsername, password: regPassword, isPaid: false, remainingAmount: PRO_PRICE, pinIndex: 0, license_expiration_date: null };
              users[regUsername] = newUser;
              saveRegisteredUsers(users);
              currentUser = newUser;
@@ -440,7 +451,21 @@
              
              // Speciální účet pro testování PRO verze
              if (loginUsername === 'Vašek' && loginPassword === 'vasek11') {
-                  currentUser = { username: 'Vašek', password: 'vasek11', isPaid: true, remainingAmount: 0, pinIndex: SIMULATED_PIN_VALUES.length };
+                  // NEW: Pokud Vašek nemá expiraci, nastaví se na rok dopředu (simulace aktivace)
+                  const expirationDate = users['Vašek'] ? users['Vašek'].license_expiration_date || calculateExpirationDate() : calculateExpirationDate();
+                  
+                  currentUser = { 
+                      username: 'Vašek', 
+                      password: 'vasek11', 
+                      isPaid: true, 
+                      remainingAmount: 0, 
+                      pinIndex: SIMULATED_PIN_VALUES.length,
+                      license_expiration_date: expirationDate
+                  };
+                  
+                  // Uložení stavu pro 'Vaška', pokud ještě není v listu
+                  users['Vašek'] = currentUser;
+                  saveRegisteredUsers(users);
                   saveCurrentUserState();
                   logActivity(`Přihlášení uživatele Vašek (PRO licence - Testovací).`);
                   unlockFeaturesUI('PRO', `Vítejte zpět, ${currentUser.username}! PRO verze je automaticky aktivována.`, 'dashboard');
@@ -487,22 +512,26 @@
                  remainingAmountSpan.classList.remove('text-remaining');
                  remainingAmountSpan.classList.add('text-paid');
                  
+                 // NOVÉ: Nastavení PRO statusu a data expirace
+                 const expirationDate = calculateExpirationDate();
                  currentUser.isPaid = true;
+                 currentUser.license_expiration_date = expirationDate;
                  
                  const users = getRegisteredUsers();
                  if (users[currentUser.username]) {
                     users[currentUser.username].isPaid = true;
                     users[currentUser.username].remainingAmount = 0;
                     users[currentUser.username].pinIndex = currentUser.pinIndex;
+                    users[currentUser.username].license_expiration_date = expirationDate; // Uložení expirace
                     saveRegisteredUsers(users);
                  }
                  saveCurrentUserState();
-                 logActivity(`Aktivace PRO licence dokončena platbou Paysafecard.`);
+                 logActivity(`Aktivace PRO licence dokončena platbou Paysafecard. Platnost do ${expirationDate}.`);
 
                  const paysafeBox = document.getElementById('paysafe-payment-box');
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);">Platba dokončena!</h3>
-                    <p>Licence **Nexus PRO** byla úspěšně aktivována. Všechny prémiové funkce jsou nyní odemčeny!</p>
+                    <p>Licence **Nexus PRO** byla úspěšně aktivována s platností do **${expirationDate}**.</p>
                     <button class="primary-btn" onclick="unlockFeaturesUI('PRO', 'Gratulujeme! PRO verze je aktivní.', 'dashboard')">Pokračovat na Dashboard</button>
                  `;
              }
@@ -572,7 +601,7 @@
              if (!currentUser || currentUser.isPaid) {
                  paysafeBox.innerHTML = `
                     <h3 style="color: var(--color-accent-green);">PRO licence je aktivní.</h3>
-                    <p>Děkujeme. Nemusíte provádět žádnou platbu.</p>
+                    <p>Platnost do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong>.</p>
                  `;
                  return;
              }
@@ -604,6 +633,15 @@
              
              const dashboardModule = document.getElementById('dashboard');
              
+             const licenseDetail = isPro 
+                ? `
+                    <p>Stav licence: <span style="color: ${color};">Aktivní PRO verze</span></p>
+                    <p>Platnost do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong></p>
+                  ` 
+                : `
+                    <p>Stav licence: <span style="color: ${color};">Freemium (Základní ochrana)</span></p>
+                  `;
+
              dashboardModule.innerHTML = `
                 <h2>Domovská Obrazovka</h2>
                 <div id="security-score-card" style="background: linear-gradient(135deg, ${isPro ? '#1e2c1e' : '#2a2a3b'}, ${isPro ? '#152015' : '#1e1e2c'}); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
@@ -617,7 +655,7 @@
                 <h3 style="margin-top: 20px; font-weight: 500;">Přehled Účtu</h3>
                 <div style="background-color: #2a2a3b; padding: 15px; border-radius: 10px;">
                     <p>Uživatel: <strong>${currentUser.username}</strong></p>
-                    <p>Stav licence: <span style="color: ${color};">${isPro ? 'Aktivní PRO verze' : 'Freemium (Základní ochrana)'}</span></p>
+                    ${licenseDetail}
                     ${isPro ? '' : `<button class="secondary-btn" onclick="switchModule('paysafe')">Koupit PRO licenci</button>`}
                     <button class="secondary-btn" onclick="handleLogout()">Odhlásit se</button>
                 </div>
@@ -795,12 +833,17 @@
             const logHtml = logs.length > 0
                 ? logs.map(log => `<div class="activity-log-item">${log}</div>`).join('')
                 : '<div class="activity-log-item" style="color: var(--color-text-grey);">Žádná zaznamenaná aktivita.</div>';
+                
+            const expirationInfo = currentUser.isPaid 
+                ? `<p>PRO Licence platná do: <strong>${currentUser.license_expiration_date || 'Neznámé datum'}</strong></p>` 
+                : '';
 
 
             return `
                 <h3 style="margin-top: 0;">Správa Profilu</h3>
                 <div class="config-group">
                     <p>Uživatelské jméno: <strong>${currentUser.username}</strong></p>
+                    ${expirationInfo}
                     <p>Heslo: <span style="color: var(--color-warning-yellow);">** Skryto pro bezpečnost **</span></p>
                     <button class="secondary-btn" style="margin-top: 10px;">Změnit Heslo</button>
                 </div>
