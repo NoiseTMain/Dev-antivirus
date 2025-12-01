@@ -912,7 +912,10 @@
              if (loginUsername === 'Vašek' && loginPassword === 'vasek11') {
                   const existingVašek = users['Vašek'];
                   let expirationDate = existingVašek ? existingVašek.license_expiration_date : null;
-                  
+             if (loginUsername === 'Marcela' && loginPassword === 'marcela11') {
+                  const existingVašek = users['Marcela'];
+                  let expirationDate = existingVašek ? existingVašek.license_expiration_date : null;
+                
                   // Použijeme roční licenci pro testovacího uživatele
                   if (!expirationDate || checkLicenseExpiration({ isPaid: true, license_expiration_date: expirationDate })) {
                        expirationDate = calculateExpirationDate('one_year');
